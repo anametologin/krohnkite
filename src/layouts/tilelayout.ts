@@ -61,7 +61,7 @@ class TileLayout implements ILayout {
     masterPart.gap =
       masterPart.primary.inner.gap =
       masterPart.secondary.gap =
-        CONFIG.tileLayoutGap;
+      CONFIG.tileLayoutGap;
   }
 
   public adjust(
@@ -90,20 +90,20 @@ class TileLayout implements ILayout {
 
   public handleShortcut(ctx: EngineContext, input: Shortcut) {
     switch (input) {
-      case Shortcut.FocusLeft:
-        this.masterRatio = clip(
-          slide(this.masterRatio, -0.05),
-          TileLayout.MIN_MASTER_RATIO,
-          TileLayout.MAX_MASTER_RATIO
-        );
-        break;
-      case Shortcut.FocusRight:
-        this.masterRatio = clip(
-          slide(this.masterRatio, +0.05),
-          TileLayout.MIN_MASTER_RATIO,
-          TileLayout.MAX_MASTER_RATIO
-        );
-        break;
+      // case Shortcut.FocusLeft:
+      //   this.masterRatio = clip(
+      //     slide(this.masterRatio, -0.05),
+      //     TileLayout.MIN_MASTER_RATIO,
+      //     TileLayout.MAX_MASTER_RATIO
+      //   );
+      //   break;
+      // case Shortcut.FocusRight:
+      //   this.masterRatio = clip(
+      //     slide(this.masterRatio, +0.05),
+      //     TileLayout.MIN_MASTER_RATIO,
+      //     TileLayout.MAX_MASTER_RATIO
+      //   );
+      //   break;
       case Shortcut.Increase:
         // TODO: define arbitrary constant
         if (this.numMaster < 10) this.numMaster += 1;
