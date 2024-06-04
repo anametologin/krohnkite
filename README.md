@@ -140,6 +140,16 @@ the full potential of the script.
 3. Bind keys for global shortcut `Window to Next/Previous Screen`
    (Recommend: `Meta + <` / `Meta + >`)
 
+### Configuration tweaks for Wayland
+
+On Wayland, in order to share specific windows to X11 clients, one needs the
+`xwaylandvideobridge` application.  This program, when installed, autostarts on
+login and is "invisible" (has 1 pixel height and width).  This can cause issues
+when `krohnkite` attempts to tile windows (see #7 and #21).
+
+Adding the `xwaylandvideobridge` class to the Ignore Windows "By Class" list
+fixes the issue.
+
 ### Removing Title Bars
 
 Breeze window decoration can be configured to completely remove title bars from
