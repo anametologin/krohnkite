@@ -36,7 +36,7 @@ K and looks cool.
 ## Look at me
 
 Delete unused KWin shortcuts
-`qdbus org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.cleanUp`
+`qdbus6 org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.cleanUp`
 
 ## Installation
 
