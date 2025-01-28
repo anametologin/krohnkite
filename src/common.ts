@@ -103,6 +103,7 @@ interface IShortcuts {
   getTileLayout(): ShortcutHandler;
   getMonocleLayout(): ShortcutHandler;
   getThreeColumnLayout(): ShortcutHandler;
+  getThreeColumnAltLayout(): ShortcutHandler;
   getSpreadLayout(): ShortcutHandler;
   getStairLayout(): ShortcutHandler;
   getFloatingLayout(): ShortcutHandler;

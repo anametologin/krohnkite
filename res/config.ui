@@ -208,6 +208,16 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="kcfg_enableThreeColumnAltLayout">
+            <property name="toolTip">
+             <string>Enable Three Column Alt layout</string>
+            </property>
+            <property name="text">
+             <string>Three Column Layout Alt</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QCheckBox" name="kcfg_enableSpiralLayout">
             <property name="text">
              <string>Spiral Layout</string>

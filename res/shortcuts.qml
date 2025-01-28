@@ -258,6 +258,9 @@ Item {
     function getThreeColumnLayout() {
         return treeColumnLayout;
     }
+    function getThreeColumnAltLayout() {
+        return treeColumnLayoutAlt;
+    }
     ShortcutHandler {
         id: treeColumnLayout;
 
