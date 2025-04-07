@@ -65,7 +65,6 @@ class HalfSplitLayoutPart<L extends ILayoutPart, R extends ILayoutPart>
    */
   public angle: 0 | 90 | 180 | 270;
 
-  public gap: number;
   public primarySize: number;
   public ratio: number;
 
@@ -79,7 +78,6 @@ class HalfSplitLayoutPart<L extends ILayoutPart, R extends ILayoutPart>
 
   constructor(public primary: L, public secondary: R) {
     this.angle = 0;
-    this.gap = 0;
     this.primarySize = 1;
     this.ratio = 0.5;
   }
@@ -127,7 +125,7 @@ class HalfSplitLayoutPart<L extends ILayoutPart, R extends ILayoutPart>
       this.ratio = LayoutUtils.adjustAreaHalfWeights(
         area,
         this.reversed ? 1 - this.ratio : this.ratio,
-        this.gap,
+        gap,
         this.reversed ? 1 - targetIndex : targetIndex,
         delta,
         this.horizontal
@@ -169,7 +167,7 @@ class HalfSplitLayoutPart<L extends ILayoutPart, R extends ILayoutPart>
       const [area1, area2] = LayoutUtils.splitAreaHalfWeighted(
         area,
         ratio,
-        this.gap,
+        gap,
         this.horizontal
       );
       const result1 = this.primary.apply(
