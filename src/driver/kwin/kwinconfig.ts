@@ -132,6 +132,7 @@ class KWinConfig implements IConfig {
         ["enableMonocleLayout", true, MonocleLayout],
         ["enableColumnsLayout", true, ColumnsLayout],
         ["enableThreeColumnLayout", true, ThreeColumnLayout],
+        ["enableThreeColumnAltLayout", true, ThreeColumnAltLayout],
         ["enableSpreadLayout", true, SpreadLayout],
         ["enableStairLayout", true, StairLayout],
         ["enableSpiralLayout", true, SpiralLayout],
