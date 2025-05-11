@@ -210,6 +210,10 @@ class KWinWindow implements IDriverWindow {
     }
   }
 
+  public raise() {
+    this.workspace.raiseWindow(this.window);
+  }
+
   public toString(): string {
     /* using a shorthand name to keep debug message tidy */
     return (

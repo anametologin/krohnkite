@@ -1,6 +1,7 @@
 /pkg/
 /node_modules/
 /builds/
+/.idea/
 /.task/
 
 /TODO.md

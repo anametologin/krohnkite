@@ -242,7 +242,16 @@ class TilingController {
 
   public onWindowFocused(ctx: IDriverContext, window: WindowClass) {
     window.timestamp = new Date().getTime();
+
+    if (CONFIG.raiseAllMosaicTileWindowsAtOnce && window.isMosaicTile) {
+      this.engine.windows.getVisibleWindows(ctx.currentSurface)
+          .filter(w => w.isMosaicTile)
+          .forEach(w => {
+            w.window.raise();
+          });
+    }
   }
+
   public onDesktopsChanged(ctx: IDriverContext, window: WindowClass) {
     if (window.state !== WindowState.Docked)
       window.state = WindowState.Undecided;
