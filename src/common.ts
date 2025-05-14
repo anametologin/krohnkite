@@ -158,6 +158,7 @@ interface IConfig {
   adjustLayoutLive: boolean;
   floatedWindowsLayer: WindowLayer;
   tiledWindowsLayer: WindowLayer;
+  raiseAllMosaicTileWindowsAtOnce: boolean;
   keepTilingOnDrag: boolean;
   noTileBorder: boolean;
   notificationDuration: number;
@@ -197,6 +198,7 @@ interface IDriverWindow {
   surface: ISurface;
 
   commit(geometry?: Rect, noBorder?: boolean, windowLayer?: WindowLayer): void;
+  raise(): void;
   visible(srf: ISurface): boolean;
 }
 
