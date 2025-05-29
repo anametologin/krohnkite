@@ -67,6 +67,16 @@ class WindowClass {
     return this.window.shouldIgnore;
   }
 
+  /**
+   * Intent:
+   * - On a given surface, there is (at most) one set of non-maximised windows
+   *   that fills the whole surface. It comprises a main layout, and docked
+   *   windows if there are any.
+   * - This method returns whether this window is part of that set.
+   */
+  public get isMosaicTile(): boolean {
+    return (this.state === WindowState.Docked || this.state === WindowState.Tiled);
+  }
   /** If this window ***can be*** tiled by layout. */
   public get tileable(): boolean {
     return WindowClass.isTileableState(this.state);

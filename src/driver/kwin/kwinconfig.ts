@@ -50,6 +50,7 @@ class KWinConfig implements IConfig {
   public columnsLayerConf: string[];
   public tiledWindowsLayer: number;
   public floatedWindowsLayer: number;
+  public raiseAllMosaicTileWindowsAtOnce: boolean;
   public monocleMaximize: boolean;
   public monocleMinimizeRest: boolean;
   public stairReverse: boolean; // kwin.specific
@@ -220,6 +221,7 @@ class KWinConfig implements IConfig {
     this.floatedWindowsLayer = getWindowLayer(
       KWIN.readConfig("floatedWindowsLayer", 1)
     );
+    this.raiseAllMosaicTileWindowsAtOnce = KWIN.readConfig("raiseAllMosaicTileWindowsAtOnce", true);
     this.quarterLayoutReset = KWIN.readConfig("quarterLayoutReset", false);
     this.monocleMaximize = KWIN.readConfig("monocleMaximize", true);
     this.monocleMinimizeRest = KWIN.readConfig("monocleMinimizeRest", false);

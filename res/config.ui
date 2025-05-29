@@ -3317,6 +3317,13 @@
             </item>
            </widget>
           </item>
+          <item row="2" column="0">
+           <widget class="QCheckBox" name="kcfg_raiseAllMosaicTileWindowsAtOnce">
+            <property name="text">
+             <string>Bring all tiled windows to the front at once</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
