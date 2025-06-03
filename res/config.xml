@@ -274,6 +274,11 @@
         <default>1</default>
     </entry>
 
+    <entry name="raiseAllMosaicTileWindowsAtOnce" type="Bool">
+        <label>When a tiled window gains focus, bring all others to the same layer</label>
+        <default>true</default>
+    </entry>
+
     <entry name="soleWindowWidth" type="Int">
 	    <label>The sole window width in percent.</label>
         <default>100</default>

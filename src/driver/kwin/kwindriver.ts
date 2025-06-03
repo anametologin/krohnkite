@@ -392,15 +392,21 @@ class KWinDriver implements IDriverContext {
       (window.window as KWinWindow).maximized = maximized;
       this.control.onWindowMaximizeChanged(this, window, maximized);
     });
+
     this.connect(client.minimizedChanged, () => {
       if (KWINCONFIG.preventMinimize) {
         client.minimized = false;
         this.workspace.activeWindow = client;
+
+      } else if (client.minimized) {
+        this.control.onWindowChanged(this, window, "minimized");
+
       } else {
-        var comment = client.minimized ? "minimized" : "unminimized";
-        this.control.onWindowChanged(this, window, comment);
+        this.control.onWindowChanged(this, window, "unminimized");
+        this.control.onWindowFocused(this, window);
       }
     });
+
     this.connect(client.fullScreenChanged, () =>
       this.control.onWindowChanged(
         this,
