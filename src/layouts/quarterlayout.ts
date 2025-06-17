@@ -104,7 +104,7 @@ class QuarterLayout implements ILayout {
   ): void {
     if (CONFIG.quarterLayoutReset) {
       // Reset splits if a window was closed (i.e. tile count decreased)
-      if (tileables.length < this.prevTileCount) {
+      if (tileables.length < this.prevTileCount && this.prevTileCount <= 4) {
         this.resetSplits();
       }
       // Update the stored count for next time
