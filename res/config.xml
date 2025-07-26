@@ -191,7 +191,7 @@
 
     <entry name="ignoreClass" type="String">
 	    <label>Ignore windows with certain classes(comma-separated list)</label>
-        <default>krunner,yakuake,spectacle,kded5,xwaylandvideobridge,plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1,org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter</default>
+        <default>krunner,yakuake,spectacle,kded5,xwaylandvideobridge,plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1,org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter,kscreenlocker_greet</default>
     </entry>
 
     <entry name="ignoreRole" type="String">
