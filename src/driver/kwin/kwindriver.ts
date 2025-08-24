@@ -186,7 +186,7 @@ class KWinDriver implements IDriverContext {
         LOG?.send(
           LogModules.shortcut,
           `Shortcut pressed:`,
-          `${ShortcutsKeys[shortcut]}`
+          `${ShortcutStr(shortcut)}`
         );
         this.enter(() => this.control.onShortcut(this, shortcut));
       };
@@ -459,7 +459,7 @@ class KWinDriver implements IDriverContext {
       LOG?.send(
         LogModules.bufferGeometryChanged,
         "eventFired",
-        `Window: caption:${client.caption} internalId:${client.internalId}, moving:${moving}, resizing:${resizing}, geometry:${window.geometry}`,
+        `Window: caption:${client.caption} internalId:${client.internalId}, moving:${moving}, resizing:${resizing}, actualGeometry: ${window.actualGeometry}, commitGeometry:${window.geometry}`,
         { winClass: [`${client.resourceClass}`] }
       );
       if (moving) this.control.onWindowMove(window);

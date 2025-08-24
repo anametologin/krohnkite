@@ -18,24 +18,6 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-enum WindowState {
-  /* initial value */
-  Unmanaged,
-
-  /* script-external state - overrides internal state */
-  NativeFullscreen,
-  NativeMaximized,
-
-  /* script-internal state */
-  Floating,
-  Maximized,
-  Tiled,
-  TiledAfloat,
-  Undecided,
-  Dragging,
-  Docked,
-}
-
 class WindowClass {
   public static isTileableState(state: WindowState): boolean {
     return (
@@ -88,6 +70,13 @@ class WindowClass {
   public floatGeometry: Rect;
   public geometry: Rect;
   public timestamp: number;
+
+  public get minSize() {
+    return this._minSize;
+  }
+  public get maxSize() {
+    return this._maxSize;
+  }
 
   /**
    * The current state of the window.
@@ -183,17 +172,21 @@ class WindowClass {
     this._minSize = window.minSize;
     this._maxSize = window.maxSize;
   }
-
-  public get minSize() {
-    return this._minSize;
-  }
-  public get maxSize() {
-    return this._maxSize;
+  public toString(): string {
+    return `Window: id=${this.id}, state: ${windowStateStr(this.state)}. ${
+      this.window
+    }`;
   }
 
   public commit(noBorders?: boolean) {
     const state = this.state;
-    LOG?.send(LogModules.window, "commit", `state: ${WindowState[state]}`);
+    LOG?.send(
+      LogModules.arrangeScreen,
+      "commit",
+      `id: ${this.id}, state: ${windowStateStr(state)}, floatGeometry: ${
+        this.floatGeometry
+      }, commitGeometry: ${this.geometry}, noBorders: ${noBorders}`
+    );
     switch (state) {
       case WindowState.Dragging:
         break;
@@ -268,9 +261,5 @@ class WindowClass {
   }
   public get minimized(): boolean {
     return this.window.minimized;
-  }
-
-  public toString(): string {
-    return "Window(" + String(this.window) + ")";
   }
 }

@@ -20,6 +20,29 @@
 
 type percentType = number;
 
+const WindowState = {
+  /* initial value */
+  Unmanaged: 1,
+
+  /* script-external state - overrides internal state */
+  NativeFullscreen: 2,
+  NativeMaximized: 3,
+
+  /* script-internal state */
+  Floating: 4,
+  Maximized: 5,
+  Tiled: 6,
+  TiledAfloat: 7,
+  Undecided: 8,
+  Dragging: 9,
+  Docked: 10,
+};
+type WindowState = (typeof WindowState)[keyof typeof WindowState];
+const WindowStateKeys = Object.keys(WindowState);
+let windowStateStr = (state: WindowState) => {
+  return WindowStateKeys[state - 1];
+};
+
 const Shortcut = {
   FocusNext: 1,
   FocusPrev: 2,
@@ -72,6 +95,10 @@ const Shortcut = {
 type Shortcut = (typeof Shortcut)[keyof typeof Shortcut];
 
 const ShortcutsKeys = Object.keys(Shortcut);
+
+let ShortcutStr = (shortcut: Shortcut) => {
+  return ShortcutsKeys[shortcut - 1];
+};
 
 interface IShortcuts {
   getToggleDock(): ShortcutHandler;
@@ -368,6 +395,8 @@ interface ILogModules {
     message?: string,
     filters?: ILogFilters
   ): void;
+  print(module?: LogModule, action?: string, message?: string): void;
+  isModuleOn(module: LogModule): boolean;
 }
 
 interface ILogFilters {

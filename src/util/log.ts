@@ -36,11 +36,17 @@ class Logging implements ILogModules {
     message?: string,
     filter?: ILogFilters
   ) {
-    if (module !== undefined && !this._logModules.has(module)) return;
+    if (module !== undefined && !this.isModuleOn(module)) return;
     if (filter !== undefined) {
       if (this.isFiltered(filter)) return;
     }
     this._print(module, action, message);
+  }
+  public print(module?: LogModule, action?: string, message?: string) {
+    this._print(module, action, message);
+  }
+  public isModuleOn(module: LogModule): boolean {
+    return this._logModules.has(module);
   }
   private isFiltered(filter: ILogFilters): boolean {
     if (this._filters === null) return false;

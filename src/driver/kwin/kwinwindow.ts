@@ -210,14 +210,7 @@ class KWinWindow implements IDriverWindow {
   }
 
   public toString(): string {
-    /* using a shorthand name to keep debug message tidy */
-    return (
-      "KWin(" +
-      this.window.internalId.toString() +
-      "." +
-      this.window.resourceClass +
-      ")"
-    );
+    return `${debugWin(this.window)}`;
   }
 
   public visible(srf: ISurface): boolean {

@@ -235,7 +235,7 @@ class TilingEngine {
     LOG?.send(
       LogModules.arrangeScreen,
       "Begin",
-      `layout: ${layout}, surface: ${srf}, visibles number: ${visibles.length}`
+      `output: ${srf.output}, layout: ${layout}, visibles number: ${visibles.length}`
     );
     const gaps = this.getGaps(srf);
 
@@ -246,6 +246,14 @@ class TilingEngine {
     );
 
     visibles.forEach((window) => {
+      if (LOG?.isModuleOn(LogModules.arrangeScreen)) {
+        let mes = "";
+        visibles.forEach((tile) => {
+          mes += `${tile}\n`;
+        });
+        LOG.print(LogModules.arrangeScreen, "visibles", mes);
+      }
+
       if (window.state === WindowState.Undecided) {
         window.state =
           window.shouldFloat || CONFIG.floatDefault
@@ -298,6 +306,21 @@ class TilingEngine {
               (tile.maxSize.height < tile.geometry.height ||
                 tile.maxSize.width < tile.geometry.width))
           ) {
+            LOG?.send(
+              LogModules.arrangeScreen,
+              "unfitWindow",
+              `id: ${tile.id} commitGeometry:${tile.geometry}. minSize:${
+                tile.minSize.width
+              }:${tile.minSize.height} - heightUnfit:${
+                tile.minSize.height > tile.geometry.height
+              } widthUnfit: ${
+                tile.minSize.width > tile.geometry.width
+              }, tile.maxSize:${tile.maxSize.width}:${
+                tile.maxSize.height
+              } heightUnfit: ${
+                tile.maxSize.height < tile.geometry.height
+              }, widthUnfit: ${tile.maxSize.width < tile.geometry.width}`
+            );
             tile.state = WindowState.Floating;
             return false;
           } else {
@@ -310,6 +333,15 @@ class TilingEngine {
       }
       function layoutApply() {
         layout.apply(engineCtx, tileables, tilingArea, gaps.between);
+        if (LOG?.isModuleOn(LogModules.arrangeScreen)) {
+          let mes = "";
+          tileables.forEach((tile) => {
+            mes += `${tile.id}, state:${windowStateStr(
+              tile.state
+            )}, commitGeometry:${tile.geometry}\n`;
+          });
+          LOG?.send(LogModules.arrangeScreen, "LayoutApply", mes);
+        }
       }
     }
 
