@@ -488,7 +488,25 @@ class TilingEngine {
     }
 
     const neighbor = this.getNeighborByDirection(ctx, window, dir);
-    if (neighbor) this.windows.swap(window, neighbor);
+    if (neighbor) {
+      this.windows.swap(window, neighbor)
+    } else {
+        switch (dir) {
+          case "up":
+            ctx.workspace.slotWindowToAboveScreen();
+            break;
+          case "down":
+            ctx.workspace.slotWindowToBelowScreen();
+            break;
+          case "left":
+            ctx.workspace.slotWindowToPrevScreen();
+            break;
+          case "right":
+            ctx.workspace.slotWindowToNextScreen();
+            break;
+      }
+      window.state = WindowState.Tiled;
+    }
   }
 
   /**

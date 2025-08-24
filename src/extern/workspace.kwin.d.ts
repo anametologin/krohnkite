@@ -32,6 +32,11 @@ interface Workspace {
   virtualScreenGeometryChanged: QSignal;
   currentDesktopChanged: QSignal; // (desktop: IVirtualDesktop)
   cursorPosChanged: QSignal;
+  // slots
+  slotWindowToAboveScreen(): void;
+  slotWindowToBelowScreen(): void;
+  slotWindowToNextScreen(): void;
+  slotWindowToPrevScreen(): void;
   // functions
   sendClientToScreen(client: Window, output: Output): void;
   showOutline(geometry: QRect): void;
