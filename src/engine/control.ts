@@ -37,14 +37,14 @@ class TilingController {
   }
 
   public onSurfaceUpdate(ctx: IDriverContext): void {
-    this.engine.arrange(ctx);
+    this.engine.arrange(ctx, getMethodName());
   }
   public onCurrentActivityChanged(ctx: IDriverContext): void {
-    this.engine.arrange(ctx);
+    this.engine.arrange(ctx, getMethodName());
   }
 
   public onCurrentSurfaceChanged(ctx: IDriverContext): void {
-    this.engine.arrange(ctx);
+    this.engine.arrange(ctx, getMethodName());
   }
 
   public onWindowAdded(ctx: IDriverContext, window: WindowClass): void {
@@ -68,7 +68,7 @@ class TilingController {
       window.state !== WindowState.NativeMaximized &&
       window.state !== WindowState.NativeFullscreen
     )
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
   }
 
   public onWindowSkipPagerChanged(
@@ -78,11 +78,11 @@ class TilingController {
   ) {
     if (skipPager) window.state = WindowState.Floating;
     else window.state = WindowState.Undecided;
-    this.engine.arrange(ctx);
+    this.engine.arrange(ctx, getMethodName());
   }
   public onWindowRemoved(ctx: IDriverContext, window: WindowClass): void {
     this.engine.unmanage(window);
-    this.engine.arrange(ctx);
+    this.engine.arrange(ctx, getMethodName());
   }
 
   public onWindowMoveStart(window: WindowClass): void {
@@ -122,7 +122,7 @@ class TilingController {
           srf.workingArea as Rect
         )
       ) {
-        this.engine.arrange(ctx);
+        this.engine.arrange(ctx, getMethodName());
       }
 
       this.dragCompleteTime = Date.now();
@@ -134,7 +134,7 @@ class TilingController {
     /* swap window by dragging */
     if (window.state === WindowState.Dragging) {
       window.setState(WindowState.Tiled);
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
       return;
     }
 
@@ -149,7 +149,7 @@ class TilingController {
 
       if (targets.length === 1) {
         this.engine.windows.swap(window, targets[0]);
-        this.engine.arrange(ctx);
+        this.engine.arrange(ctx, getMethodName());
         return;
       }
     }
@@ -162,7 +162,7 @@ class TilingController {
       if (distance > 30) {
         window.floatGeometry = window.actualGeometry;
         window.state = WindowState.Floating;
-        this.engine.arrange(ctx);
+        this.engine.arrange(ctx, getMethodName());
         return;
       }
     }
@@ -182,20 +182,20 @@ class TilingController {
       window.state === WindowState.Tiled
     ) {
       this.engine.adjustLayout(window);
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
     } else if (window.state === WindowState.Docked) {
       this.engine.adjustDock(window);
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
     }
   }
 
   public onWindowResizeOver(ctx: IDriverContext, window: WindowClass): void {
     if (CONFIG.adjustLayout && window.tiled) {
       this.engine.adjustLayout(window);
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
     } else if (window.state === WindowState.Docked) {
       this.engine.adjustDock(window);
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
     } else if (!CONFIG.adjustLayout) this.engine.enforceSize(ctx, window);
   }
 
@@ -203,7 +203,7 @@ class TilingController {
     ctx: IDriverContext,
     window: WindowClass
   ): void {
-    this.engine.arrange(ctx);
+    this.engine.arrange(ctx, getMethodName());
   }
 
   public onWindowGeometryChanged(
@@ -233,7 +233,7 @@ class TilingController {
         workingArea.x + (workingArea.width - window.floatGeometry.width) / 2;
       window.floatGeometry.y =
         workingArea.y + (workingArea.height - window.floatGeometry.height) / 2;
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
     }
   }
 
@@ -246,6 +246,7 @@ class TilingController {
   }
 
   public onShortcut(ctx: IDriverContext, input: Shortcut, data?: any) {
+    let isArrangeNeeded = true;
     if (CONFIG.directionalKeyMode === "dwm") {
       switch (input) {
         case Shortcut.FocusUp:
@@ -284,10 +285,10 @@ class TilingController {
       window.state === WindowState.Docked &&
       this.engine.handleDockShortcut(ctx, window, input)
     ) {
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
       return;
     } else if (this.engine.handleLayoutShortcut(ctx, input, data)) {
-      this.engine.arrange(ctx);
+      this.engine.arrange(ctx, getMethodName());
       return;
     }
 
@@ -391,16 +392,16 @@ class TilingController {
         break;
 
       case Shortcut.SwapUp:
-        this.engine.swapDirOrMoveFloat(ctx, "up");
+        isArrangeNeeded = this.engine.swapDirOrMoveFloat(ctx, "up");
         break;
       case Shortcut.SwapDown:
-        this.engine.swapDirOrMoveFloat(ctx, "down");
+        isArrangeNeeded = this.engine.swapDirOrMoveFloat(ctx, "down");
         break;
       case Shortcut.SwapLeft:
-        this.engine.swapDirOrMoveFloat(ctx, "left");
+        isArrangeNeeded = this.engine.swapDirOrMoveFloat(ctx, "left");
         break;
       case Shortcut.SwapRight:
-        this.engine.swapDirOrMoveFloat(ctx, "right");
+        isArrangeNeeded = this.engine.swapDirOrMoveFloat(ctx, "right");
         break;
 
       case Shortcut.SetMaster:
@@ -427,6 +428,7 @@ class TilingController {
         if (window) this.engine.toggleDock(window);
         break;
     }
-    this.engine.arrange(ctx);
+    if (!isArrangeNeeded) return;
+    this.engine.arrange(ctx, getMethodName());
   }
 }

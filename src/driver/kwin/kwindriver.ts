@@ -180,6 +180,87 @@ class KWinDriver implements IDriverContext {
   }
   //#endregion
 
+  public moveToScreen(window: WindowClass, direction: Direction) {
+    let client = (window.window as KWinWindow).window;
+    let output = client.output;
+    let neighbor = this.getNeighborOutput(direction, output);
+    if (neighbor === null || neighbor === undefined) return;
+    client.minimized = true;
+    this.workspace.sendClientToScreen(client, neighbor);
+    this.setTimeout(() => {
+      client.minimized = false;
+      this.workspace.activeWindow = client;
+      this.control.engine.arrange(this, "moveToScreen");
+    }, 100);
+  }
+
+  private getNeighborOutput(
+    direction: Direction,
+    source: Output
+  ): Output | null {
+    let retOutput = null;
+    let sourceRect = toRect(source.geometry);
+    for (let target of this.workspace.screens) {
+      if (target === source) continue;
+      let targetRect = toRect(target.geometry);
+      switch (direction) {
+        case "left": {
+          if (
+            targetRect.maxX === sourceRect.x &&
+            ((sourceRect.y <= targetRect.y &&
+              sourceRect.maxY >= targetRect.maxY) ||
+              (targetRect.y <= sourceRect.y &&
+                targetRect.maxY >= sourceRect.maxY))
+          ) {
+            retOutput = target;
+          }
+          break;
+        }
+        case "right": {
+          if (
+            sourceRect.maxX === targetRect.x &&
+            ((sourceRect.y <= targetRect.y &&
+              sourceRect.maxY >= targetRect.maxY) ||
+              (targetRect.y <= sourceRect.y &&
+                targetRect.maxY >= sourceRect.maxY))
+          ) {
+            retOutput = target;
+          }
+          break;
+        }
+        case "up": {
+          if (
+            sourceRect.y === targetRect.maxY &&
+            ((sourceRect.x <= targetRect.x &&
+              sourceRect.maxX >= targetRect.maxX) ||
+              (targetRect.x <= sourceRect.x &&
+                targetRect.maxX >= sourceRect.maxX))
+          ) {
+            retOutput = target;
+          }
+          break;
+        }
+        case "down": {
+          if (
+            sourceRect.maxY === targetRect.y &&
+            ((sourceRect.x <= targetRect.x &&
+              sourceRect.maxX >= targetRect.maxX) ||
+              (targetRect.x <= sourceRect.x &&
+                targetRect.maxX >= sourceRect.maxX))
+          ) {
+            retOutput = target;
+          }
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+      if (retOutput !== null) return retOutput;
+    }
+    return null;
+  }
+
   private bindShortcut() {
     const callbackShortcut = (shortcut: Shortcut) => {
       return () => {

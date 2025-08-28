@@ -133,3 +133,11 @@ function surfaceIdParse(id: string): [string, string, string] {
 
   return [outputName, activity, desktopName];
 }
+/**
+ * Get current function name
+ * @returns string | undefined
+ */
+function getMethodName(): string {
+  var err = new Error();
+  return `${err.stack?.split("\n")[1].split("@")[0]}`;
+}

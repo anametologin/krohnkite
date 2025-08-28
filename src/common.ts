@@ -255,6 +255,7 @@ interface IDriverContext {
 
   setTimeout(func: () => void, timeout: number): void;
   showNotification(text: string): void;
+  moveToScreen(window: WindowClass, direction: Direction): void;
 }
 
 interface ILayoutClass {

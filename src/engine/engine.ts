@@ -219,7 +219,8 @@ class TilingEngine {
   /**
    * Arrange tiles on all screens.
    */
-  public arrange(ctx: IDriverContext) {
+  public arrange(ctx: IDriverContext, reason: string) {
+    LOG?.send(LogModules.arrangeScreen, "ArrangeScreens", `Reason: ${reason}`);
     ctx.screens.forEach((srf: ISurface) => {
       this.arrangeScreen(ctx, srf);
     });
@@ -235,7 +236,7 @@ class TilingEngine {
     LOG?.send(
       LogModules.arrangeScreen,
       "Begin",
-      `output: ${srf.output}, layout: ${layout}, visibles number: ${visibles.length}`
+      `output: ${srf.output.name}, layout: ${layout}, visibles number: ${visibles.length}`
     );
     const gaps = this.getGaps(srf);
 
@@ -478,17 +479,36 @@ class TilingEngine {
   /**
    * Swap the position of the current window with a neighbor at the given direction.
    */
-  public swapDirection(ctx: IDriverContext, dir: Direction) {
+  public swapDirection(ctx: IDriverContext, dir: Direction): boolean {
     const window = ctx.currentWindow;
     if (window === null) {
       /* if no current window, select the first tile. */
       const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
       if (tiles.length > 1) ctx.currentWindow = tiles[0];
-      return;
+      return false;
     }
 
     const neighbor = this.getNeighborByDirection(ctx, window, dir);
-    if (neighbor) this.windows.swap(window, neighbor);
+    if (neighbor) {
+      this.windows.swap(window, neighbor);
+    } else {
+      switch (dir) {
+        case "up":
+          ctx.moveToScreen(window, "up");
+          break;
+        case "down":
+          ctx.moveToScreen(window, "down");
+          break;
+        case "left":
+          ctx.moveToScreen(window, "left");
+          break;
+        case "right":
+          ctx.moveToScreen(window, "right");
+          break;
+      }
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -526,13 +546,16 @@ class TilingEngine {
     window.forceSetGeometry(new Rect(x, y, geometry.width, geometry.height));
   }
 
-  public swapDirOrMoveFloat(ctx: IDriverContext, dir: Direction) {
+  public swapDirOrMoveFloat(ctx: IDriverContext, dir: Direction): boolean {
     const window = ctx.currentWindow;
-    if (!window) return;
+    if (!window) return false;
 
     const state = window.state;
     if (WindowClass.isFloatingState(state)) this.moveFloat(window, dir);
-    else if (WindowClass.isTiledState(state)) this.swapDirection(ctx, dir);
+    else if (WindowClass.isTiledState(state)) {
+      return this.swapDirection(ctx, dir);
+    }
+    return true;
   }
 
   public toggleDock(window: WindowClass) {
