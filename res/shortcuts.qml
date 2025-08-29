@@ -9,7 +9,7 @@ Item {
     ShortcutHandler {
         id: toggleDock;
 
-        name: "KrohnkitetoggleDock";
+        name: "KrohnkiteToggleDock";
         text: "Krohnkite: Toggle Dock";
         sequence: "";
     }
@@ -151,7 +151,7 @@ Item {
     ShortcutHandler {
         id: growWidth;
 
-        name: "KrohnkitegrowWidth";
+        name: "KrohnkiteGrowWidth";
         text: "Krohnkite: Grow Width";
         sequence: "Meta+Ctrl+L";
     }
