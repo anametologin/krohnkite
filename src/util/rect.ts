@@ -181,6 +181,20 @@ class Rect {
     );
   }
 
+  public intersection(other: Rect, coordinate: "x" | "y") {
+    if (coordinate === "x") {
+      return Math.max(
+        0,
+        Math.min(this.maxX, other.maxX) - Math.max(this.x, other.x)
+      );
+    } else {
+      return Math.max(
+        0,
+        Math.min(this.maxY, other.maxY) - Math.max(this.y, other.y)
+      );
+    }
+  }
+
   public toString(): string {
     return "Rect(" + [this.x, this.y, this.width, this.height].join(", ") + ")";
   }

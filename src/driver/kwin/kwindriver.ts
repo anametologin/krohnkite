@@ -198,57 +198,45 @@ class KWinDriver implements IDriverContext {
     direction: Direction,
     source: Output
   ): Output | null {
+    function isOutputCandidate(
+      targetRect: Rect,
+      coordinate: "x" | "y"
+    ): boolean {
+      let currentIntersection = sourceRect.intersection(targetRect, coordinate);
+      if (currentIntersection > intersection) {
+        intersection = currentIntersection;
+        return true;
+      }
+      return false;
+    }
     let retOutput = null;
+    let intersection = 0;
     let sourceRect = toRect(source.geometry);
     for (let target of this.workspace.screens) {
       if (target === source) continue;
       let targetRect = toRect(target.geometry);
       switch (direction) {
         case "left": {
-          if (
-            targetRect.maxX === sourceRect.x &&
-            ((sourceRect.y <= targetRect.y &&
-              sourceRect.maxY >= targetRect.maxY) ||
-              (targetRect.y <= sourceRect.y &&
-                targetRect.maxY >= sourceRect.maxY))
-          ) {
-            retOutput = target;
+          if (sourceRect.x === targetRect.maxX) {
+            if (isOutputCandidate(targetRect, "y")) retOutput = target;
           }
           break;
         }
         case "right": {
-          if (
-            sourceRect.maxX === targetRect.x &&
-            ((sourceRect.y <= targetRect.y &&
-              sourceRect.maxY >= targetRect.maxY) ||
-              (targetRect.y <= sourceRect.y &&
-                targetRect.maxY >= sourceRect.maxY))
-          ) {
-            retOutput = target;
+          if (sourceRect.maxX === targetRect.x) {
+            if (isOutputCandidate(targetRect, "y")) retOutput = target;
           }
           break;
         }
         case "up": {
-          if (
-            sourceRect.y === targetRect.maxY &&
-            ((sourceRect.x <= targetRect.x &&
-              sourceRect.maxX >= targetRect.maxX) ||
-              (targetRect.x <= sourceRect.x &&
-                targetRect.maxX >= sourceRect.maxX))
-          ) {
-            retOutput = target;
+          if (sourceRect.y === targetRect.maxY) {
+            if (isOutputCandidate(targetRect, "x")) retOutput = target;
           }
           break;
         }
         case "down": {
-          if (
-            sourceRect.maxY === targetRect.y &&
-            ((sourceRect.x <= targetRect.x &&
-              sourceRect.maxX >= targetRect.maxX) ||
-              (targetRect.x <= sourceRect.x &&
-                targetRect.maxX >= sourceRect.maxX))
-          ) {
-            retOutput = target;
+          if (sourceRect.maxY === targetRect.y) {
+            if (isOutputCandidate(targetRect, "x")) retOutput = target;
           }
           break;
         }
@@ -256,9 +244,8 @@ class KWinDriver implements IDriverContext {
           break;
         }
       }
-      if (retOutput !== null) return retOutput;
     }
-    return null;
+    return retOutput;
   }
 
   private bindShortcut() {
