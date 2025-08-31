@@ -585,7 +585,7 @@ class TilingEngine {
       return window.state === WindowState.Floating ? count + 1 : count;
     }, 0);
 
-    if (numFloats < windows.length / 2) {
+    if (numFloats === 0) {
       windows.forEach((window) => {
         /* TODO: do not use arbitrary constants */
         window.floatGeometry = window.actualGeometry.gap(4, 4, 4, 4);
