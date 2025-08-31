@@ -198,6 +198,9 @@ class KWinDriver implements IDriverContext {
     direction: Direction,
     source: Output
   ): Output | null {
+    let retOutput = null;
+    let intersection = 0;
+    let sourceRect = toRect(source.geometry);
     function isOutputCandidate(
       targetRect: Rect,
       coordinate: "x" | "y"
@@ -209,9 +212,6 @@ class KWinDriver implements IDriverContext {
       }
       return false;
     }
-    let retOutput = null;
-    let intersection = 0;
-    let sourceRect = toRect(source.geometry);
     for (let target of this.workspace.screens) {
       if (target === source) continue;
       let targetRect = toRect(target.geometry);
