@@ -23,10 +23,11 @@ type BTreeLayoutPart = HalfSplitLayoutPart<
   BTreeLayoutPart | FillLayoutPart
 >;
 
-class BTreeLayout implements ILayout {
-  public static readonly id = "BTreeLayout";
+class BinaryTreeLayout implements ILayout {
+  public static readonly id = "BinaryTreeLayout";
 
-  public readonly classID = BTreeLayout.id;
+  public readonly classID = BinaryTreeLayout.id;
+  public readonly capacity?: number | null;
 
   public get description(): string {
     return "BTree";
@@ -34,7 +35,8 @@ class BTreeLayout implements ILayout {
 
   private parts: BTreeLayoutPart;
 
-  constructor() {
+  constructor(capacity?: number | null) {
+    this.capacity = capacity !== undefined ? capacity : null;
     this.parts = new HalfSplitLayoutPart(
       new FillLayoutPart(),
       new FillLayoutPart()

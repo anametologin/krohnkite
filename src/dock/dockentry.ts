@@ -20,10 +20,10 @@
 
 class DockEntry implements IDockEntry {
   private _slots: DockSlot[];
-  private surfaceCfg: dockSurfaceCfg;
+  private surfaceCfg: SurfaceCfg<IDockCfg>;
   private _id: string;
 
-  constructor(cfg: dockSurfaceCfg, id: string) {
+  constructor(cfg: SurfaceCfg<IDockCfg>, id: string) {
     this.surfaceCfg = cfg;
     this._slots = this.parseSlots();
     this._id = id;

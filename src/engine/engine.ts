@@ -19,6 +19,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 type Direction = "up" | "down" | "left" | "right";
+type ScreenData = {
+  visibles: WindowClass[];
+  tileables: WindowClass[];
+  layout: ILayout;
+  workingArea: Rect;
+  srf: ISurface;
+  capacity: number | null;
+  overCapacity: WindowClass[];
+  awaitToMove: WindowClass[];
+};
 
 /**
  * Maintains tiling context and performs various tiling actions.
@@ -220,41 +230,65 @@ class TilingEngine {
    * Arrange tiles on all screens.
    */
   public arrange(ctx: IDriverContext, reason: string) {
-    LOG?.send(LogModules.arrangeScreen, "ArrangeScreens", `Reason: ${reason}`);
-    ctx.screens.forEach((srf: ISurface) => {
-      this.arrangeScreen(ctx, srf);
+    LOG?.send(
+      LogModules.arrangeScreen,
+      "ArrangeScreens",
+      `###################################################Reason: ${reason}####################################`
+    );
+    const surfaces = ctx.currentSurfaces;
+    let screensData: ScreenData[] = [];
+    surfaces.forEach((srf) => {
+      screensData.push(this.getTileables(srf));
+    });
+    if (CONFIG.surfacesIsMoveWindows && reason !== "moveWindowsToScreen") {
+      let isMoving = false;
+      screensData.forEach((screenData: ScreenData) => {
+        if (screenData.overCapacity.length > 0) {
+          for (let i = 0; i < screensData.length; i++) {
+            let sd = screensData[i];
+            if (sd.capacity === null) {
+              sd.awaitToMove.push(
+                ...screenData.overCapacity.splice(
+                  0,
+                  screenData.overCapacity.length
+                )
+              );
+              isMoving = true;
+            } else if (sd.capacity - sd.awaitToMove.length > 0) {
+              const availableSlots = Math.min(
+                sd.capacity - sd.awaitToMove.length,
+                screenData.overCapacity.length
+              );
+              sd.awaitToMove.push(
+                ...screenData.overCapacity.splice(0, availableSlots)
+              );
+              isMoving = true;
+            }
+            if (screenData.overCapacity.length === 0) {
+              break;
+            }
+          }
+        }
+      });
+      if (isMoving) {
+        let moveTiles: [Output, WindowClass[]][] = [];
+        screensData.forEach((screenData: ScreenData) => {
+          if (screenData.awaitToMove.length > 0)
+            moveTiles.push([screenData.srf.output, screenData.awaitToMove]);
+        });
+        ctx.moveWindowsToScreen(moveTiles);
+        return;
+      }
+    }
+
+    screensData.forEach((screenData: ScreenData) => {
+      this.arrangeScreen(ctx, screenData);
     });
   }
 
-  /**
-   * Arrange tiles on a screen.
-   */
-  public arrangeScreen(ctx: IDriverContext, srf: ISurface) {
-    const layout = this.layouts.getCurrentLayout(srf);
-
-    const visibles = this.windows.getVisibleWindows(srf);
-    LOG?.send(
-      LogModules.arrangeScreen,
-      "Begin",
-      `output: ${srf.output.name}, layout: ${layout}, visibles number: ${visibles.length}`
-    );
-    const gaps = this.getGaps(srf);
-
-    const workingArea = this.docks.render(
-      srf,
-      visibles,
-      srf.workingArea.clone()
-    );
-
+  private getTileables(srf: ISurface): ScreenData {
+    let visibles = this.windows.getVisibleWindows(srf);
     visibles.forEach((window) => {
-      if (LOG?.isModuleOn(LogModules.arrangeScreen)) {
-        let mes = "";
-        visibles.forEach((tile) => {
-          mes += `${tile}\n`;
-        });
-        LOG.print(LogModules.arrangeScreen, "visibles", mes);
-      }
-
       if (window.state === WindowState.Undecided) {
         window.state =
           window.shouldFloat || CONFIG.floatDefault
@@ -262,54 +296,152 @@ class TilingEngine {
             : WindowState.Tiled;
       }
     });
-
+    if (LOG?.isModuleOn(LogModules.arrangeScreen)) {
+      let mes = "";
+      visibles.forEach((tile) => {
+        mes += `${tile}\n`;
+      });
+      LOG.print(LogModules.arrangeScreen, "visibles", mes);
+    }
     let tileables = this.windows.getVisibleTileables(srf);
+    let layout = this.layouts.getCurrentLayout(srf);
+
+    let capacity: number | null;
+    let layoutCap = layout.capacity === undefined ? null : layout.capacity;
+    if (layoutCap === null && srf.capacity === null) {
+      capacity = null;
+    } else if (layoutCap === null || srf.capacity === null) {
+      capacity = layoutCap || srf.capacity;
+    } else {
+      capacity = Math.min(layoutCap, srf.capacity);
+    }
+    let overCapacity: WindowClass[];
+    if (capacity !== null && tileables.length > capacity) {
+      if (!CONFIG.surfacesIsMoveOldestWindows) {
+        overCapacity = tileables.splice(0, tileables.length - capacity);
+      } else {
+        overCapacity = tileables.splice(capacity - tileables.length);
+      }
+      capacity = 0;
+    } else {
+      overCapacity = [];
+      capacity = capacity === null ? null : capacity - tileables.length;
+    }
+    let screenData = {
+      visibles: visibles,
+      tileables: tileables,
+      layout: layout,
+      workingArea: this.docks.render(srf, visibles, srf.workingArea.clone()),
+      srf: srf,
+      overCapacity: overCapacity,
+      capacity: capacity,
+      awaitToMove: [],
+    };
+
+    LOG?.send(
+      LogModules.arrangeScreen,
+      "getTileablesReturn",
+      `output: ${srf.output.name}\n visibles number: ${
+        visibles.length
+      }\n tileables.length: ${screenData.tileables.length}, workingArea: ${
+        screenData.workingArea
+      }, layout: ${
+        screenData.layout
+      },capacity: ${capacity}, overCapacity: ${screenData.overCapacity.map(
+        (win) => win.window.windowClassName
+      )}`
+    );
+    return screenData;
+  }
+
+  /**
+   * Arrange tiles on a screen.
+   */
+  public arrangeScreen(ctx: IDriverContext, screenData: ScreenData) {
+    LOG?.send(
+      LogModules.arrangeScreen,
+      "arrangeScreen",
+      `output: ${screenData.srf.output.name}`
+    );
+    screenData.overCapacity.forEach((win) => {
+      win.state = WindowState.Floating;
+    });
+    const gaps = this.getGaps(screenData.srf);
 
     let tilingArea: Rect;
     if (
-      (CONFIG.monocleMaximize && layout instanceof MonocleLayout) ||
-      (tileables.length === 1 && CONFIG.soleWindowNoGaps)
+      (CONFIG.monocleMaximize && screenData.layout instanceof MonocleLayout) ||
+      (screenData.tileables.length === 1 && CONFIG.soleWindowNoGaps)
     )
-      tilingArea = workingArea;
+      tilingArea = screenData.workingArea;
     else if (
-      tileables.length === 1 &&
+      screenData.tileables.length === 1 &&
       ((CONFIG.soleWindowWidth < 100 && CONFIG.soleWindowWidth > 0) ||
         (CONFIG.soleWindowHeight < 100 && CONFIG.soleWindowHeight > 0))
     ) {
       const h_gap =
-        (workingArea.height -
-          workingArea.height * (CONFIG.soleWindowHeight / 100)) /
+        (screenData.workingArea.height -
+          screenData.workingArea.height * (CONFIG.soleWindowHeight / 100)) /
         2;
       const v_gap =
-        (workingArea.width -
-          workingArea.width * (CONFIG.soleWindowWidth / 100)) /
+        (screenData.workingArea.width -
+          screenData.workingArea.width * (CONFIG.soleWindowWidth / 100)) /
         2;
-      tilingArea = workingArea.gap(v_gap, v_gap, h_gap, h_gap);
+      tilingArea = screenData.workingArea.gap(v_gap, v_gap, h_gap, h_gap);
     } else
-      tilingArea = workingArea.gap(
+      tilingArea = screenData.workingArea.gap(
         gaps.left,
         gaps.right,
         gaps.top,
         gaps.bottom
       );
 
-    let tileablesLen = tileables.length;
+    let tileablesLen = screenData.tileables.length;
     if (tileablesLen > 0) {
       let engineCtx = new EngineContext(ctx, this);
+      function layoutApply() {
+        screenData.layout.apply(
+          engineCtx,
+          screenData.tileables,
+          tilingArea,
+          gaps.between
+        );
+        if (LOG?.isModuleOn(LogModules.arrangeScreen)) {
+          let mes = "";
+          screenData.tileables.forEach((tile) => {
+            mes += `${tile.id}, state:${windowStateStr(
+              tile.state
+            )}, commitGeometry:${tile.geometry}\n`;
+          });
+          LOG?.send(LogModules.arrangeScreen, "LayoutApply", mes);
+        }
+      }
+      function getNumberTileablesGreaterThenMin(
+        tileables: WindowClass[]
+      ): number {
+        let numberOfTiles = 0;
+        tileables.forEach((tile) => {
+          if (
+            tile.minSize.height > tile.geometry.height ||
+            tile.minSize.width > tile.geometry.width
+          ) {
+            numberOfTiles++;
+          }
+        });
+        return numberOfTiles;
+      }
       layoutApply();
       if (CONFIG.unfitGreater || CONFIG.unfitLess) {
-        tileables = tileables.filter((tile) => {
+        let unfitGreaterQuantity = 0;
+        screenData.tileables = screenData.tileables.filter((tile) => {
           if (
-            (CONFIG.unfitGreater &&
-              (tile.minSize.height > tile.geometry.height ||
-                tile.minSize.width > tile.geometry.width)) ||
-            (CONFIG.unfitLess &&
-              (tile.maxSize.height < tile.geometry.height ||
-                tile.maxSize.width < tile.geometry.width))
+            CONFIG.unfitLess &&
+            (tile.maxSize.height < tile.geometry.height ||
+              tile.maxSize.width < tile.geometry.width)
           ) {
             LOG?.send(
               LogModules.arrangeScreen,
-              "unfitWindow",
+              "unfitLess",
               `id: ${tile.id} commitGeometry:${tile.geometry}. minSize:${
                 tile.minSize.width
               }:${tile.minSize.height} - heightUnfit:${
@@ -324,33 +456,51 @@ class TilingEngine {
             );
             tile.state = WindowState.Floating;
             return false;
+          } else if (
+            CONFIG.unfitGreater &&
+            (tile.minSize.height > tile.geometry.height ||
+              tile.minSize.width > tile.geometry.width)
+          ) {
+            unfitGreaterQuantity += 1;
+            return true;
           } else {
             return true;
           }
         });
-        if (tileables.length !== tileablesLen) {
+        if (screenData.tileables.length !== tileablesLen) {
           layoutApply();
         }
-      }
-      function layoutApply() {
-        layout.apply(engineCtx, tileables, tilingArea, gaps.between);
-        if (LOG?.isModuleOn(LogModules.arrangeScreen)) {
-          let mes = "";
-          tileables.forEach((tile) => {
-            mes += `${tile.id}, state:${windowStateStr(
-              tile.state
-            )}, commitGeometry:${tile.geometry}\n`;
-          });
-          LOG?.send(LogModules.arrangeScreen, "LayoutApply", mes);
+        if (unfitGreaterQuantity > 0) {
+          LOG?.send(
+            LogModules.arrangeScreen,
+            "UnfitGreater",
+            `unfitGreaterQuantity: ${unfitGreaterQuantity}`
+          );
+          if (screenData.tileables.length !== tileablesLen) {
+            unfitGreaterQuantity = getNumberTileablesGreaterThenMin(
+              screenData.tileables
+            );
+          }
+          while (screenData.tileables.length > 0 && unfitGreaterQuantity > 0) {
+            let tile = screenData.tileables.shift();
+            tile!.state = WindowState.Floating;
+            layoutApply();
+            unfitGreaterQuantity = getNumberTileablesGreaterThenMin(
+              screenData.tileables
+            );
+          }
         }
       }
     }
 
-    if (CONFIG.limitTileWidthRatio > 0 && !(layout instanceof MonocleLayout)) {
+    if (
+      CONFIG.limitTileWidthRatio > 0 &&
+      !(screenData.layout instanceof MonocleLayout)
+    ) {
       const maxWidth = Math.floor(
-        workingArea.height * CONFIG.limitTileWidthRatio
+        screenData.workingArea.height * CONFIG.limitTileWidthRatio
       );
-      tileables
+      screenData.tileables
         .filter((tile) => tile.tiled && tile.geometry.width > maxWidth)
         .forEach((tile) => {
           const g = tile.geometry;
@@ -363,16 +513,20 @@ class TilingEngine {
         });
     }
 
-    if (CONFIG.soleWindowNoBorders && tileables.length === 1) {
-      visibles.forEach((window) => {
+    if (CONFIG.soleWindowNoBorders && screenData.tileables.length === 1) {
+      screenData.visibles.forEach((window) => {
         if (window.state === WindowState.Tiled)
           window.commit(CONFIG.soleWindowNoBorders);
         else window.commit();
       });
     } else {
-      visibles.forEach((window) => window.commit());
+      screenData.visibles.forEach((window) => window.commit());
     }
-    LOG?.send(LogModules.arrangeScreen, "Finished", `${srf}`);
+    LOG?.send(
+      LogModules.arrangeScreen,
+      "#######################################################Finished",
+      `${screenData.srf}`
+    );
   }
 
   /**

@@ -24,6 +24,7 @@ class TileLayout implements ILayout {
   public static readonly id = "TileLayout";
 
   public readonly classID = TileLayout.id;
+  public readonly capacity?: number | null;
 
   public get description(): string {
     return "Tile [" + this.numMaster + "]";
@@ -49,7 +50,8 @@ class TileLayout implements ILayout {
     this.parts.inner.ratio = value;
   }
 
-  constructor() {
+  constructor(capacity?: number | null) {
+    this.capacity = capacity !== undefined ? capacity : null;
     this.parts = new RotateLayoutPart(
       new HalfSplitLayoutPart(
         new RotateLayoutPart(new StackLayoutPart()),

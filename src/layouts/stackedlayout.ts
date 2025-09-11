@@ -22,6 +22,7 @@ class StackedLayout implements ILayout {
   public static readonly id = "StackedLayout";
 
   public readonly classID = StackedLayout.id;
+  public readonly capacity: number | null;
 
   public get description(): string {
     return "Stacked";
@@ -31,7 +32,8 @@ class StackedLayout implements ILayout {
     HalfSplitLayoutPart<StackLayoutPart, StackLayoutPart>
   >;
 
-  constructor() {
+  constructor(capacity?: number | null) {
+    this.capacity = capacity !== undefined ? capacity : null;
     this.parts = new RotateLayoutPart(
       new HalfSplitLayoutPart(new StackLayoutPart(), new StackLayoutPart())
     );

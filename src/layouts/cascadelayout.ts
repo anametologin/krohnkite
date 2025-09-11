@@ -32,6 +32,8 @@ enum CascadeDirection {
 class CascadeLayout implements ILayout {
   public static readonly id = "CascadeLayout";
 
+  public readonly capacity?: number | null;
+
   /** Decompose direction into vertical and horizontal steps */
   public static decomposeDirection(
     dir: CascadeDirection
@@ -62,8 +64,11 @@ class CascadeLayout implements ILayout {
     return "Cascade [" + CascadeDirection[this.dir] + "]";
   }
 
-  constructor(private dir: CascadeDirection = CascadeDirection.SouthEast) {
-    /* nothing */
+  constructor(
+    private dir: CascadeDirection = CascadeDirection.SouthEast,
+    capacity?: number | null
+  ) {
+    this.capacity = capacity !== undefined ? capacity : null;
   }
 
   public apply(

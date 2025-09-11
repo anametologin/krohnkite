@@ -38,13 +38,12 @@ class KWinDriver implements IDriverContext {
   }
 
   public get currentSurface(): ISurface {
-    return new KWinSurface(
+    return this._surfaceStore.getSurface(
       this.workspace.activeWindow
         ? this.workspace.activeWindow.output
         : this.workspace.activeScreen,
       this.workspace.currentActivity,
-      this.workspace.currentDesktop,
-      this.workspace
+      this.workspace.currentDesktop
     );
   }
 
@@ -55,8 +54,8 @@ class KWinDriver implements IDriverContext {
     // TODO: fousing window on other screen?
     // TODO: find a way to change activity
 
-    if (this.workspace.currentDesktop.id !== ksrf.desktop.id)
-      this.workspace.currentDesktop = ksrf.desktop;
+    if (this.workspace.currentDesktop.id !== ksrf.vDesktop.id)
+      this.workspace.currentDesktop = ksrf.vDesktop;
     if (this.workspace.currentActivity !== ksrf.activity)
       this.workspace.currentActivity = ksrf.activity;
   }
@@ -73,19 +72,18 @@ class KWinDriver implements IDriverContext {
     }
   }
 
-  public get screens(): ISurface[] {
-    const screens: ISurface[] = [];
-    this.workspace.screens.forEach((screen) => {
-      screens.push(
-        new KWinSurface(
-          screen,
+  public get currentSurfaces(): ISurface[] {
+    const currentSurfaces: ISurface[] = [];
+    this.workspace.screens.forEach((output) => {
+      currentSurfaces.push(
+        this._surfaceStore.getSurface(
+          output,
           this.workspace.currentActivity,
-          this.workspace.currentDesktop,
-          this.workspace
+          this.workspace.currentDesktop
         )
       );
     });
-    return screens;
+    return currentSurfaces;
   }
 
   public get cursorPosition(): [number, number] | null {
@@ -101,9 +99,11 @@ class KWinDriver implements IDriverContext {
   private control: TilingController;
   private windowMap: WrapperMap<Window, WindowClass>;
   private entered: boolean;
+  private _surfaceStore: KWinSurfaceStore;
 
   constructor(api: Api) {
     KWIN = api.kwin;
+    CONFIG = KWINCONFIG = new KWinConfig();
     this.workspace = api.workspace;
     this.shortcuts = api.shortcuts;
     this.engine = new TilingEngine();
@@ -111,9 +111,12 @@ class KWinDriver implements IDriverContext {
     this.windowMap = new WrapperMap(
       (client: Window) => KWinWindow.generateID(client),
       (client: Window) =>
-        new WindowClass(new KWinWindow(client, this.workspace))
+        new WindowClass(
+          new KWinWindow(client, this.workspace, this._surfaceStore)
+        )
     );
     this.entered = false;
+    this._surfaceStore = new KWinSurfaceStore(this.workspace);
   }
 
   /*
@@ -121,9 +124,7 @@ class KWinDriver implements IDriverContext {
    */
 
   public main() {
-    CONFIG = KWINCONFIG = new KWinConfig();
     LOG?.send(LogModules.printConfig, undefined, `Config: ${CONFIG}`);
-
     this.bindEvents();
     this.bindShortcut();
 
@@ -179,6 +180,26 @@ class KWinDriver implements IDriverContext {
       popupDialog.show(text, CONFIG.notificationDuration);
   }
   //#endregion
+
+  public moveWindowsToScreen(
+    windowsToScreen: [output: Output, windows: WindowClass[]][]
+  ) {
+    let clients: Window[] = [];
+    windowsToScreen.forEach(([targetOutput, windows]) => {
+      windows.forEach((window) => {
+        let client = (window.window as KWinWindow).window;
+        clients.push(client);
+        client.minimized = true;
+        this.workspace.sendClientToScreen(client, targetOutput);
+      });
+      this.setTimeout(() => {
+        clients.forEach((client) => {
+          client.minimized = false;
+        });
+        this.control.engine.arrange(this, "moveWindowsToScreen");
+      }, 100);
+    });
+  }
 
   public moveToScreen(window: WindowClass, direction: Direction) {
     let client = (window.window as KWinWindow).window;
@@ -379,7 +400,7 @@ class KWinDriver implements IDriverContext {
       .activated.connect(callbackShortcutLayout(SpiralLayout));
     this.shortcuts
       .getBTreeLayout()
-      .activated.connect(callbackShortcutLayout(BTreeLayout));
+      .activated.connect(callbackShortcutLayout(BinaryTreeLayout));
   }
 
   //#region Helper functions
@@ -405,7 +426,7 @@ class KWinDriver implements IDriverContext {
    * Run the given function in a protected(?) context to prevent nested event
    * handling.
    *
-   * KWin emits signals as soons as window states are changed, even when
+   * KWin emits signals as soon as window states are changed, even when
    * those states are modified by the script. This causes multiple re-entry
    * during event handling, resulting in performance degradation and harder
    * debugging.
@@ -423,6 +444,8 @@ class KWinDriver implements IDriverContext {
     }
   }
   //#endregion
+  //TODO: add signal Vdesktop.aboutToBeDestroyed
+  //add signal workspace.activity.removed
   private bindEvents() {
     this.connect(this.workspace.screensChanged, () => {
       LOG?.send(LogModules.screensChanged, "eventFired");

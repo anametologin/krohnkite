@@ -21,7 +21,7 @@
 class DockStore implements IDockStore {
   private store: { [SurfaceId: string]: DockEntry };
   private defaultCfg: DefaultDockCfg | null;
-  private surfacesCfg: dockSurfaceCfg[];
+  private surfacesCfg: SurfaceCfg<IDockCfg>[];
   private windowClassesCfg: { [windowClassName: string]: IDock };
 
   constructor() {
@@ -92,10 +92,10 @@ class DockStore implements IDockStore {
     return false;
   }
 
-  private getSurfaceCfg(srf: ISurface): dockSurfaceCfg {
+  private getSurfaceCfg(srf: ISurface): SurfaceCfg<IDockCfg> {
     let dockCfg: IDockCfg | null = null;
     for (let surfaceCfg of this.surfacesCfg) {
-      if (surfaceCfg.isFit(srf)) {
+      if (surfaceCfg.isFit(srf.output, srf.activity, srf.vDesktop)) {
         dockCfg = { ...surfaceCfg.cfg };
         break;
       }
@@ -103,6 +103,11 @@ class DockStore implements IDockStore {
     if (dockCfg === null) dockCfg = this.defaultCfg!.cloneAndUpdate({});
     let [outputName, activityId, vDesktopName] = srf.getParams();
 
-    return new dockSurfaceCfg(outputName, activityId, vDesktopName, dockCfg);
+    return new SurfaceCfg<IDockCfg>(
+      outputName,
+      activityId,
+      vDesktopName,
+      dockCfg
+    );
   }
 }

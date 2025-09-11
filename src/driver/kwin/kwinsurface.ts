@@ -1,4 +1,5 @@
 // Copyright (c) 2018-2019 Eon S. Jeon <esjeon@hyunmu.am>
+// Copyright (c) 2024 Vjatcheslav V. Kolchkov <akl334@protonmail.ch>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -17,7 +18,116 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+interface ISurfaceCfg {
+  capacity: number;
+}
+class KWinSurfaceStore implements ISurfaceStore {
+  private _store: { [id: string]: ISurface };
+  private _userSurfacesCfg: SurfaceCfg<ISurfaceCfg>[];
+  private workspace: Workspace;
 
+  constructor(workspace: Workspace) {
+    this._store = {};
+    this._userSurfacesCfg = KWinSurfaceStore.getSurfacesUserCfg();
+    this.workspace = workspace;
+  }
+
+  public getSurface(
+    output: Output,
+    activity: string,
+    vDesktop: VirtualDesktop
+  ): ISurface {
+    const id = KWinSurface.generateId(output, activity, vDesktop);
+    if (!(id in this._store)) {
+      let surfaceCfg = this._surfaceCfg(output, activity, vDesktop);
+      this._store[id] = new KWinSurface(
+        output,
+        activity,
+        vDesktop,
+        this.workspace,
+        surfaceCfg
+      );
+    } else if (this._store[id].output?.name === undefined) {
+      this._store[id].output = output;
+    }
+    return this._store[id];
+  }
+  private _surfaceCfg(
+    output: Output,
+    activity: string,
+    vDesktop: VirtualDesktop
+  ): ISurfaceCfg | null {
+    for (let i = 0; i < this._userSurfacesCfg.length; i++) {
+      let userCfg = this._userSurfacesCfg[i];
+      if (userCfg.isFit(output, activity, vDesktop)) return userCfg.cfg;
+    }
+    return null;
+  }
+  private static getSurfacesUserCfg(): SurfaceCfg<ISurfaceCfg>[] {
+    let userCfg: SurfaceCfg<ISurfaceCfg>[] = [];
+    getSurfacesCfg(CONFIG.surfacesDefaultConfig).forEach((srf) => {
+      let validatedCfg = KWinSurfaceStore.validateUserCfg(srf.unvalidatedCfg);
+      userCfg.push(
+        new SurfaceCfg<ISurfaceCfg>(
+          srf.outputName,
+          srf.activityId,
+          srf.vDesktopName,
+          validatedCfg
+        )
+      );
+    });
+
+    return userCfg;
+  }
+  private static validateUserCfg(rawCfg: string[]): ISurfaceCfg {
+    let errors: string[] = [];
+    const cfgFields = ["cp", "capacity"];
+    let surfaceCfg: ISurfaceCfg = { capacity: 99 };
+    rawCfg.forEach((part) => {
+      let splittedPart = part.split("=").map((p) => p.trim());
+      if (splittedPart.length !== 2) {
+        errors.push(`"${part}" have to has the one equal sign`);
+        return;
+      }
+      const [userCfgField, userValue] = splittedPart;
+
+      if (userCfgField.length === 0 || userValue.length === 0) {
+        errors.push(`"${part}" can not have empty field or value`);
+        return;
+      }
+      if (cfgFields.indexOf(userCfgField) < 0) {
+        errors.push(
+          `"${userCfgField}" has unknown parameter. Possible parameters: ${cfgFields.join(
+            ","
+          )}`
+        );
+        return;
+      }
+      let value: number | Err;
+      let key: keyof ISurfaceCfg;
+      switch (userCfgField) {
+        case "cp":
+        case "capacity":
+          value = validateNumber(userValue, 1, 99);
+          key = "capacity";
+          break;
+        default:
+          errors.push(
+            `"${part}" has unknown parameter. Possible parameters: ${cfgFields.join(
+              ","
+            )}`
+          );
+          return;
+      }
+      if (value instanceof Err) errors.push(`splittedPart[0]: ${value}`);
+      else surfaceCfg[key] = value;
+    });
+    if (errors.length > 0) {
+      warning(errors.join("\n"));
+    }
+    return surfaceCfg;
+  }
+}
 class KWinSurface implements ISurface {
   private static getHash(s: string): string {
     let hash = 0;
@@ -30,48 +140,62 @@ class KWinSurface implements ISurface {
     return `${hash}`;
   }
   public static generateId(
-    screenName: string,
+    output: Output,
     activity: string,
-    desktopName: string
+    vDesktop: VirtualDesktop
   ): string {
-    let path = screenName;
+    let path = output.name;
     if (KWINCONFIG.layoutPerActivity) path += "@" + activity;
-    if (KWINCONFIG.layoutPerDesktop) path += "#" + desktopName;
+    if (KWINCONFIG.layoutPerDesktop) path += "#" + vDesktop.id;
     return KWinSurface.getHash(path);
   }
 
+  public get workingArea(): Rect {
+    const area = this._workspace.clientArea(
+      ClientAreaOption.PlacementArea,
+      this.output,
+      this.vDesktop
+    );
+
+    return toRect(area);
+  }
+
+  public get capacity(): number | null {
+    return this._capacity;
+  }
+
+  public output: Output;
+
   public readonly id: string;
   public readonly ignore: boolean;
-  public readonly workingArea: Rect;
-
-  public readonly output: Output;
   public readonly activity: string;
-  public readonly desktop: VirtualDesktop;
+  public readonly vDesktop: VirtualDesktop;
+
+  private readonly _workspace: Workspace;
+  private _capacity: number | null;
 
   constructor(
     output: Output,
     activity: string,
-    desktop: VirtualDesktop,
-    workspace: Workspace
+    vDesktop: VirtualDesktop,
+    workspace: Workspace,
+    surfaceConfig: ISurfaceCfg | null
   ) {
-    //const activityName = activityInfo.activityName(activity);
-
-    this.id = KWinSurface.generateId(output.name, activity, desktop.id);
+    this.id = KWinSurface.generateId(output, activity, vDesktop);
     this.ignore =
       KWINCONFIG.ignoreActivity.indexOf(activity) >= 0 ||
       KWINCONFIG.ignoreScreen.indexOf(output.name) >= 0 ||
-      KWINCONFIG.ignoreVDesktop.indexOf(desktop.name) >= 0;
-    this.workingArea = toRect(
-      workspace.clientArea(ClientAreaOption.PlacementArea, output, desktop)
-    );
+      KWINCONFIG.ignoreVDesktop.indexOf(vDesktop.name) >= 0;
 
     this.output = output;
     this.activity = activity;
-    this.desktop = desktop;
+    this.vDesktop = vDesktop;
+    this._workspace = workspace;
+    this._capacity = surfaceConfig !== null ? surfaceConfig.capacity : null;
   }
 
   public getParams(): [string, string, string] {
-    return [this.output.name, this.activity, this.desktop.name];
+    return [this.output.name, this.activity, this.vDesktop.name];
   }
 
   public next(): ISurface | null {
@@ -89,7 +213,7 @@ class KWinSurface implements ISurface {
   public toString(): string {
     return (
       "KWinSurface(" +
-      [this.output.name, this.activity, this.desktop.name].join(", ") +
+      [this.output.name, this.activity, this.vDesktop.name].join(", ") +
       ")"
     );
   }

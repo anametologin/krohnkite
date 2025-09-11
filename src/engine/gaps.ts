@@ -85,7 +85,7 @@ class gapsSurfaceCfg {
   public isFit(srf: ISurface): boolean {
     return (
       (this.outputName === "" || this.outputName === srf.output.name) &&
-      (this.vDesktopName === "" || this.vDesktopName === srf.desktop.name) &&
+      (this.vDesktopName === "" || this.vDesktopName === srf.vDesktop.name) &&
       (this.activityId === "" || this.activityId === srf.activity)
     );
   }

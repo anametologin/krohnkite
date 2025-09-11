@@ -44,7 +44,7 @@ class EngineContext {
 
   public get surfaceParams(): string {
     let srf = this.drvctx.currentSurface;
-    return srf.output.name, srf.activity, srf.desktop.name;
+    return srf.output.name, srf.activity, srf.vDesktop.name;
   }
 
   constructor(private drvctx: IDriverContext, private engine: TilingEngine) {}

@@ -22,6 +22,7 @@ class ThreeColumnLayout implements ILayout {
   public static readonly MIN_MASTER_RATIO = 0.2;
   public static readonly MAX_MASTER_RATIO = 0.75;
   public static readonly id = "ThreeColumnLayout";
+  public readonly capacity: number | null;
 
   public readonly classID = ThreeColumnLayout.id;
 
@@ -32,7 +33,8 @@ class ThreeColumnLayout implements ILayout {
   private masterRatio: number;
   private masterSize: number;
 
-  constructor() {
+  constructor(capacity?: number | null) {
+    this.capacity = capacity !== undefined ? capacity : null;
     this.masterRatio = 0.6;
     this.masterSize = 1;
   }

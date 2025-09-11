@@ -150,7 +150,57 @@ interface IShortcuts {
 //#region Driver
 
 interface IConfig {
-  // dock parameters
+  //Layouts
+  tileLayoutInitialAngle: string;
+  monocleMaximize: boolean;
+  monocleMinimizeRest: boolean;
+  quarterLayoutReset: boolean;
+  columnsLayoutInitialAngle: string;
+  columnsBalanced: boolean;
+  columnsLayerConf: string[];
+  stairReverse: boolean;
+  layoutOrder: string[];
+  layoutFactories: { [key: string]: () => ILayout };
+
+  //Surfaces
+  surfacesDefaultConfig: string[];
+  surfacesIsMoveWindows: boolean;
+  surfacesIsMoveOldestWindows: boolean;
+
+  //Geometry
+  screenGapTop: number;
+  screenGapLeft: number;
+  screenGapBetween: number;
+  screenGapRight: number;
+  screenGapBottom: number;
+  gapsOverrideConfig: string[];
+  limitTileWidthRatio: number;
+
+  //Behavior
+  adjustLayout: boolean;
+  adjustLayoutLive: boolean;
+  directionalKeyMode: "dwm" | "focus";
+  newWindowPosition: number;
+
+  //Rules
+  ignoreClass: string[];
+  ignoreTitle: string[];
+  ignoreRole: string[];
+
+  floatingClass: string[];
+  floatingTitle: string[];
+  floatDefault: boolean;
+  floatUtility: boolean;
+
+  ignoreActivity: string[];
+  ignoreScreen: string[];
+  ignoreVDesktop: string[];
+  tileNothing: boolean;
+  tilingClass: string[];
+
+  screenDefaultLayout: string[];
+
+  //Dock
   dockOrder: [number, number, number, number];
   dockHHeight: number;
   dockHWide: number;
@@ -167,51 +217,29 @@ interface IConfig {
   dockSurfacesConfig: string[];
   dockWindowClassConfig: string[];
 
-  //#region Layout
-  layoutOrder: string[];
-  layoutFactories: { [key: string]: () => ILayout };
-  tileLayoutInitialAngle: string;
-  quarterLayoutReset: boolean;
-  columnsLayoutInitialAngle: string;
-  columnsBalanced: boolean;
-  columnsLayerConf: string[];
-  monocleMaximize: boolean;
+  //Options
+  tiledWindowsLayer: WindowLayer;
+  floatedWindowsLayer: WindowLayer;
+
   soleWindowWidth: number;
   soleWindowHeight: number;
   soleWindowNoBorders: boolean;
   soleWindowNoGaps: boolean;
-  //#endregion
 
   unfitGreater: boolean;
   unfitLess: boolean;
 
-  //#region Features
-  adjustLayout: boolean;
-  adjustLayoutLive: boolean;
-  floatedWindowsLayer: WindowLayer;
-  tiledWindowsLayer: WindowLayer;
-  keepTilingOnDrag: boolean;
-  noTileBorder: boolean;
   notificationDuration: number;
-  limitTileWidthRatio: number;
-  //#endregion
 
-  //#region Gap
-  screenGapBottom: number;
-  screenGapLeft: number;
-  screenGapRight: number;
-  screenGapTop: number;
-  screenGapBetween: number;
-  gapsOverrideConfig: string[];
-  //#endregion
-
-  //#region Behavior
-  directionalKeyMode: "dwm" | "focus";
-  newWindowPosition: number;
-  //#endregion
-  screenDefaultLayout: string[];
+  layoutPerActivity: boolean;
+  layoutPerDesktop: boolean;
+  noTileBorder: boolean;
+  keepTilingOnDrag: boolean;
+  preventMinimize: boolean;
+  preventProtrusion: boolean;
   floatSkipPager: boolean;
-  floatDefault: boolean;
+
+  //log
 }
 
 interface IDriverWindow {
@@ -232,14 +260,22 @@ interface IDriverWindow {
   visible(srf: ISurface): boolean;
 }
 
+interface ISurfaceStore {
+  getSurface(
+    output: Output,
+    activity: string,
+    vDesktop: VirtualDesktop
+  ): ISurface;
+}
+
 interface ISurface {
+  capacity: number | null;
+  output: Output;
   readonly id: string;
   readonly ignore: boolean;
   readonly workingArea: Readonly<Rect>;
-
-  readonly output: Output;
   readonly activity: string;
-  readonly desktop: VirtualDesktop;
+  readonly vDesktop: VirtualDesktop;
 
   next(): ISurface | null;
   getParams(): [string, string, string];
@@ -247,7 +283,7 @@ interface ISurface {
 
 interface IDriverContext {
   readonly backend: string;
-  readonly screens: ISurface[];
+  readonly currentSurfaces: ISurface[];
   readonly cursorPosition: [number, number] | null;
 
   currentSurface: ISurface;
@@ -255,17 +291,18 @@ interface IDriverContext {
 
   setTimeout(func: () => void, timeout: number): void;
   showNotification(text: string): void;
+  moveWindowsToScreen(windowsToScreen: [Output, WindowClass[]][]): void;
   moveToScreen(window: WindowClass, direction: Direction): void;
 }
 
 interface ILayoutClass {
   readonly id: string;
-  new (): ILayout;
+  new (capacity?: number | null): ILayout;
 }
 
 interface ILayout {
   /* read-only */
-  readonly capacity?: number;
+  readonly capacity?: number | null;
   readonly description: string;
 
   /* methods */

@@ -26,13 +26,15 @@ type SpiralLayoutPart = HalfSplitLayoutPart<
 class SpiralLayout implements ILayout {
   public static readonly id = "SpiralLayout";
   public readonly description = "Spiral";
+  public readonly capacity: number | null;
 
   public readonly classID = SpiralLayout.id;
 
   private depth: number;
   private parts: SpiralLayoutPart;
 
-  constructor() {
+  constructor(capacity?: number | null) {
+    this.capacity = capacity !== undefined ? capacity : null;
     this.depth = 1;
     this.parts = new HalfSplitLayoutPart(
       new FillLayoutPart(),

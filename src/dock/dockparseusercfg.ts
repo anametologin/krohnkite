@@ -18,32 +18,21 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-function parseDockUserSurfacesCfg(): dockSurfaceCfg[] {
+function parseDockUserSurfacesCfg(): SurfaceCfg<IDockCfg>[] {
   //format: "OuputName:ActivityId:VirtualDesktopName:shortname=value,shortname=value..."
-  let surfacesCfg: dockSurfaceCfg[] = [];
-  if (CONFIG.dockSurfacesConfig.length === 0) return surfacesCfg;
-  CONFIG.dockSurfacesConfig.forEach((cfg) => {
-    let surfaceCfgString = cfg.split(":").map((part) => part.trim());
-    if (surfaceCfgString.length !== 4) {
-      warning(
-        `Invalid User surface config: ${cfg}, config must have three colons`
-      );
-      return;
-    }
-    let splittedUserCfg = surfaceCfgString[3]
-      .split(",")
-      .map((part) => part.trim().toLowerCase());
-    let partialDockCfg = parseSplittedUserCfg(splittedUserCfg);
+  let surfacesCfg: SurfaceCfg<IDockCfg>[] = [];
+  getSurfacesCfg(CONFIG.dockSurfacesConfig).forEach((srf) => {
+    let partialDockCfg = parseSplittedUserCfg(srf.unvalidatedCfg);
     if (partialDockCfg instanceof Err) {
-      warning(`Invalid User surface config: ${cfg}. ${partialDockCfg}`);
+      warning(`Invalid User surface config: ${srf}. ${partialDockCfg}`);
       return;
     }
     if (Object.keys(partialDockCfg).length > 0) {
       surfacesCfg.push(
-        new dockSurfaceCfg(
-          surfaceCfgString[0],
-          surfaceCfgString[1],
-          surfaceCfgString[2],
+        new SurfaceCfg<IDockCfg>(
+          srf.outputName,
+          srf.activityId,
+          srf.vDesktopName,
           DefaultDockCfg.instance.cloneAndUpdate(partialDockCfg) as IDockCfg
         )
       );

@@ -23,10 +23,12 @@ class StairLayout implements ILayout {
 
   public readonly classID = StairLayout.id;
   public readonly description = "Stair";
+  public readonly capacity: number | null;
 
   private space: number; /* in PIXELS */
 
-  constructor() {
+  constructor(capacity?: number | null) {
+    this.capacity = capacity !== undefined ? capacity : null;
     this.space = 24;
   }
 

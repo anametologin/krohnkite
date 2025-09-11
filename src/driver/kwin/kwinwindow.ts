@@ -23,12 +23,6 @@ class KWinWindow implements IDriverWindow {
     return w.internalId.toString();
   }
 
-  private readonly workspace: Workspace;
-  private readonly isFloatByConfig: boolean;
-  private readonly isIgnoredByConfig: boolean;
-  public readonly window: Window;
-  public readonly id: string;
-
   public get fullScreen(): boolean {
     return this.window.fullScreen;
   }
@@ -69,7 +63,7 @@ class KWinWindow implements IDriverWindow {
 
   public get surface(): ISurface {
     let activity;
-    let desktop;
+    let vDesktop;
     if (this.window.activities.length === 0)
       activity = this.workspace.currentActivity;
     else if (
@@ -79,22 +73,19 @@ class KWinWindow implements IDriverWindow {
     else activity = this.window.activities[0];
 
     if (this.window.desktops.length === 1) {
-      desktop = this.window.desktops[0];
+      vDesktop = this.window.desktops[0];
     } else if (this.window.desktops.length === 0) {
-      desktop = this.workspace.currentDesktop;
+      vDesktop = this.workspace.currentDesktop;
     } else {
       if (this.window.desktops.indexOf(this.workspace.currentDesktop) >= 0)
-        desktop = this.workspace.currentDesktop;
-      else desktop = this.window.desktops[0];
+        vDesktop = this.workspace.currentDesktop;
+      else vDesktop = this.window.desktops[0];
     }
 
-    // const desktop = this.window.desktops[0];
-
-    return new KWinSurface(
+    return this._surfaceStore.getSurface(
       this.window.output,
       activity,
-      desktop,
-      this.workspace
+      vDesktop
     );
   }
 
@@ -103,8 +94,8 @@ class KWinWindow implements IDriverWindow {
 
     // TODO: setting activity?
     // TODO: setting screen = move to the screen
-    if (this.window.desktops[0] !== ksrf.desktop)
-      this.window.desktops = [ksrf.desktop];
+    if (this.window.desktops[0] !== ksrf.vDesktop)
+      this.window.desktops = [ksrf.vDesktop];
     if (this.window.activities[0] !== ksrf.activity)
       this.window.activities = [ksrf.activity];
   }
@@ -121,12 +112,23 @@ class KWinWindow implements IDriverWindow {
       height: this.window.maxSize.height,
     };
   }
+  public readonly window: Window;
+  public readonly id: string;
 
+  private readonly workspace: Workspace;
+  private readonly isFloatByConfig: boolean;
+  private readonly isIgnoredByConfig: boolean;
+  private readonly _surfaceStore: KWinSurfaceStore;
   private noBorderManaged: boolean;
   private noBorderOriginal: boolean;
 
-  constructor(window: Window, workspace: Workspace) {
+  constructor(
+    window: Window,
+    workspace: Workspace,
+    surfaceStore: KWinSurfaceStore
+  ) {
     this.workspace = workspace;
+    this._surfaceStore = surfaceStore;
     this.window = window;
     this.id = KWinWindow.generateID(window);
     this.maximized = false;
@@ -219,7 +221,7 @@ class KWinWindow implements IDriverWindow {
       !this.window.deleted &&
       !this.window.minimized &&
       (this.window.onAllDesktops ||
-        this.window.desktops.indexOf(ksrf.desktop) !== -1) &&
+        this.window.desktops.indexOf(ksrf.vDesktop) !== -1) &&
       (this.window.activities.length === 0 /* on all activities */ ||
         this.window.activities.indexOf(ksrf.activity) !== -1) &&
       this.window.output === ksrf.output

@@ -23,10 +23,12 @@ class SpreadLayout implements ILayout {
 
   public readonly classID = SpreadLayout.id;
   public readonly description = "Spread";
+  public readonly capacity: number | null;
 
   private space: number; /* in ratio */
 
-  constructor() {
+  constructor(capacity?: number | null) {
+    this.capacity = capacity !== undefined ? capacity : null;
     this.space = 0.07;
   }
 

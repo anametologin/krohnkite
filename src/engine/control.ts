@@ -54,15 +54,6 @@ class TilingController {
     if (window.tileable) {
       const srf = ctx.currentSurface;
       const tiles = this.engine.windows.getVisibleTiles(srf);
-      const layoutCapcity = this.engine.layouts.getCurrentLayout(srf).capacity;
-      if (layoutCapcity !== undefined && tiles.length > layoutCapcity) {
-        const nsrf = ctx.currentSurface.next();
-        if (nsrf) {
-          // (window.window as KWinWindow).client.desktop = (nsrf as KWinSurface).desktop;
-          window.surface = nsrf;
-          ctx.currentSurface = nsrf;
-        }
-      }
     }
     if (
       window.state !== WindowState.NativeMaximized &&
