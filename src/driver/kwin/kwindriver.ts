@@ -359,6 +359,13 @@ class KWinDriver implements IDriverContext {
       .getSetMaster()
       .activated.connect(callbackShortcut(Shortcut.SetMaster));
 
+    this.shortcuts
+      .getRaiseSurfaceCapacity()
+      .activated.connect(callbackShortcut(Shortcut.RaiseSurfaceCapacity));
+    this.shortcuts
+      .getLowerSurfaceCapacity()
+      .activated.connect(callbackShortcut(Shortcut.LowerSurfaceCapacity));
+
     const callbackShortcutLayout = (layoutClass: ILayoutClass) => {
       return () => {
         LOG?.send(LogModules.shortcut, "shortcut layout", `${layoutClass.id}`);

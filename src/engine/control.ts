@@ -418,6 +418,17 @@ class TilingController {
       case Shortcut.ToggleDock:
         if (window) this.engine.toggleDock(window);
         break;
+
+      case Shortcut.RaiseSurfaceCapacity:
+        let raisedCap = this.engine.raiseSurfaceCapacity(ctx);
+        ctx.showNotification(
+          `Surface capacity: ${raisedCap !== null ? raisedCap : "unlimited"}`
+        );
+        break;
+      case Shortcut.LowerSurfaceCapacity:
+        let loweredCap = this.engine.lowerSurfaceCapacity(ctx);
+        ctx.showNotification(`Surface capacity: ${loweredCap}`);
+        break;
     }
     if (!isArrangeNeeded) return;
     this.engine.arrange(ctx, getMethodName());

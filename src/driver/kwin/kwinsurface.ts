@@ -164,6 +164,10 @@ class KWinSurface implements ISurface {
     return this._capacity;
   }
 
+  public set capacity(capacity: number | null) {
+    this._capacity = capacity;
+  }
+
   public output: Output;
 
   public readonly id: string;

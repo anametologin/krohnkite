@@ -3,6 +3,26 @@ import org.kde.kwin;
 
 Item {
     id: dbus;
+    function getRaiseSurfaceCapacity(){
+        return raiseSurfaceCapacity;
+    }
+    ShortcutHandler {
+        id: raiseSurfaceCapacity;
+
+        name: "KrohnkiteRaiseSurfaceCapacity";
+        text: "Krohnkite: Raise Surface Capacity";
+        sequence: "";
+    }
+    function getLowerSurfaceCapacity(){
+        return lowerSurfaceCapacity;
+    }
+    ShortcutHandler {
+        id: lowerSurfaceCapacity;
+
+        name: "KrohnkiteLowerSurfaceCapacity";
+        text: "Krohnkite: Lower Surface Capacity";
+        sequence: "";
+    }
     function getToggleDock() {
         return toggleDock;
     }

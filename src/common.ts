@@ -91,6 +91,9 @@ const Shortcut = {
   RotatePart: 31,
 
   ToggleDock: 32,
+
+  RaiseSurfaceCapacity: 33,
+  LowerSurfaceCapacity: 34,
 } as const;
 type Shortcut = (typeof Shortcut)[keyof typeof Shortcut];
 
@@ -145,6 +148,9 @@ interface IShortcuts {
   getColumnsLayout(): ShortcutHandler;
   getSpiralLayout(): ShortcutHandler;
   getBTreeLayout(): ShortcutHandler;
+
+  getRaiseSurfaceCapacity(): ShortcutHandler;
+  getLowerSurfaceCapacity(): ShortcutHandler;
 }
 
 //#region Driver

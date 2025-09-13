@@ -719,6 +719,30 @@ class TilingEngine {
         : WindowState.Tiled;
   }
 
+  public raiseSurfaceCapacity(ctx: IDriverContext): number | null {
+    const currentSurface = ctx.currentSurface;
+    if (currentSurface.capacity !== null) {
+      currentSurface.capacity =
+        currentSurface.capacity < 98 ? currentSurface.capacity + 1 : null;
+    } else {
+      let tileables = this.windows.getVisibleTileables(currentSurface);
+      currentSurface.capacity =
+        tileables.length < 98 ? tileables.length + 1 : null;
+    }
+    return currentSurface.capacity;
+  }
+  public lowerSurfaceCapacity(ctx: IDriverContext): number | null {
+    const currentSurface = ctx.currentSurface;
+    if (currentSurface.capacity !== null) {
+      currentSurface.capacity =
+        currentSurface.capacity > 0 ? currentSurface.capacity - 1 : 0;
+    } else {
+      let tileables = this.windows.getVisibleTileables(currentSurface);
+      currentSurface.capacity = tileables.length > 0 ? tileables.length - 1 : 0;
+    }
+    return currentSurface.capacity;
+  }
+
   /**
    * Toggle float mode of window.
    */
