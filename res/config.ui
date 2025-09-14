@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>791</width>
+    <width>783</width>
     <height>1177</height>
    </rect>
   </property>
@@ -4073,7 +4073,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QGroupBox" name="GB_windowLayer">
+        <widget class="QGroupBox" name="GB_1_windowLayer">
          <property name="title">
           <string>Window Layer</string>
          </property>
@@ -4150,18 +4150,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBox_12">
+        <widget class="QGroupBox" name="GB_2_soleWindowsProps">
          <property name="title">
           <string>The Sole Window properties</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_10">
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_16">
-            <property name="text">
-             <string>Height</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="3">
            <spacer name="horizontalSpacer_3">
             <property name="orientation">
@@ -4228,6 +4221,13 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>Height</string>
+            </property>
+           </widget>
+          </item>
          </layout>
          <zorder>kcfg_soleWindowWidth</zorder>
          <zorder>label_15</zorder>
@@ -4239,7 +4239,129 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBox">
+        <widget class="QGroupBox" name="GB_3_floatInitialSettings">
+         <property name="title">
+          <string>Floating Window Initial Size</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_30">
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="kcfg_floatInitWindowHeight">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The initial height of a floating window in percent of the screen height.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="suffix">
+             <string>%</string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>50</number>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="kcfg_floatInitWindowWidth">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The initial width of a floating window in percent of the screen width.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="suffix">
+             <string>%</string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>50</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_60">
+            <property name="text">
+             <string>Height</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QCheckBox" name="kcfg_floatRandomize">
+            <property name="text">
+             <string>Randomize</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_59">
+            <property name="text">
+             <string>Width </string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QSpinBox" name="kcfg_floatRandomWidth">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Percentage of the range from the left border of the screen to the window placed in the center of the screen.Determines the randomization spread.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="suffix">
+             <string>%</string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>15</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QSpinBox" name="kcfg_floatRandomHeight">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Percentage of the range from the top of the screen to the window placed in the center of the screen.Determines the randomization spread.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="suffix">
+             <string>%</string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>15</number>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <spacer name="horizontalSpacer_21">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="GB_4_unfittedWindows">
          <property name="title">
           <string>Unfitted Windows</string>
          </property>
@@ -4274,7 +4396,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBox_13">
+        <widget class="QGroupBox" name="GB_5_Notifications">
          <property name="title">
           <string>Notifications</string>
          </property>

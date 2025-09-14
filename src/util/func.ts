@@ -56,6 +56,11 @@ function wrapIndex(index: number, length: number): number {
   return index;
 }
 
+function getRandomInt(max: number, signed = false): number {
+  const randomNumber = Math.floor(Math.random() * max);
+  if (signed && Math.random() < 0.5) return -randomNumber;
+  return randomNumber;
+}
 /**
  * Partition the given array into two parts, based on the value of the predicate
  *

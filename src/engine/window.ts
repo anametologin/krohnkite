@@ -67,9 +67,6 @@ class WindowClass {
 
     return RectDelta.fromRects(this.geometry, this.actualGeometry);
   }
-  public floatGeometry: Rect;
-  public geometry: Rect;
-  public timestamp: number;
 
   public get minSize() {
     return this._minSize;
@@ -110,7 +107,7 @@ class WindowClass {
       WindowClass.isTileableState(value)
     )
       /* save the current geometry before leaving floating state */
-      this.floatGeometry = this.actualGeometry;
+      this._floatGeometry = this.actualGeometry;
 
     this.internalState = value;
   }
@@ -148,19 +145,32 @@ class WindowClass {
     return this.window.windowClassName;
   }
 
+  public get floatGeometry(): Rect {
+    if (this._floatGeometry === null) {
+      this._floatGeometry = this.window.getInitFloatGeometry();
+    }
+    return this._floatGeometry;
+  }
+  public set floatGeometry(value: Rect) {
+    this._floatGeometry = value;
+  }
+
   public dock: Dock | null;
+  public geometry: Rect;
+  public timestamp: number;
 
   private internalState: WindowState;
   private shouldCommitFloat: boolean;
   private weightMap: { [key: string]: number };
   private _minSize: ISize;
   private _maxSize: ISize;
+  private _floatGeometry: Rect | null;
 
   constructor(window: IDriverWindow) {
     this.id = window.id;
     this.window = window;
 
-    this.floatGeometry = window.geometry;
+    this._floatGeometry = null;
     this.geometry = window.geometry;
     this.timestamp = 0;
 

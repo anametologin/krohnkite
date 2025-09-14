@@ -402,7 +402,6 @@
 	    <label>What layer will have tiled windows</label>
         <default>0</default>
     </entry>
-
     <entry name="floatedWindowsLayer" type="Int">
 	    <label>What layer will have floated windows</label>
         <default>1</default>
@@ -412,27 +411,44 @@
 	    <label>The sole window width in percent.</label>
         <default>100</default>
     </entry>
-
     <entry name="soleWindowHeight" type="Int">
 	    <label>The sole window height in percent.</label>
         <default>100</default>
     </entry>
-
     <entry name="soleWindowNoBorders" type="Bool">
       <label>Do not draw borders around sole window</label>
         <default>false</default>
     </entry>
-
     <entry name="soleWindowNoGaps" type="Bool">
       <label>Do not draw gaps around sole window</label>
         <default>false</default>
+    </entry>
+
+    <entry name="floatInitWindowWidth" type="Int">
+	    <label>The initial width of a floating window in percent of the screen width.</label>
+        <default>50</default>
+    </entry>
+    <entry name="floatInitWindowHeight" type="Int">
+	    <label>The initial height of a floating window in percent of the screen height.</label>
+        <default>50</default>
+    </entry>
+    <entry name="floatRandomize" type="Bool">
+      <label>Randomize the initial position of floating window.</label>
+        <default>true</default>
+    </entry>
+    <entry name="floatRandomWidth" type="Int">
+	    <label>Percentage of the range from the left border of the screen to the window placed in the center of the screen.Determines the randomization spread.</label>
+        <default>15</default>
+    </entry>
+    <entry name="floatRandomHeight" type="Int">
+	    <label>Percentage of the range from the top of the screen to the window placed in the center of the screen.Determines the randomization spread.</label>
+        <default>15</default>
     </entry>
 
     <entry name="unfitGreater" type="Bool">
       <label>If enable make all windows floating if they minimum size to large for tile</label>
         <default>true</default>
     </entry>
-
     <entry name="unfitLess" type="Bool">
       <label>If enable make all windows floating if the maximum size to small for tile</label>
         <default>true</default>

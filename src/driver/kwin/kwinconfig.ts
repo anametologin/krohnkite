@@ -44,17 +44,45 @@ class KWinConfig implements IConfig {
   public surfacesDefaultConfig: string[];
   public surfacesIsMoveWindows: boolean;
   public surfacesIsMoveOldestWindows: boolean;
+  /*
+   * Geometry
+   * */
+  public screenGapTop: number;
+  public screenGapLeft: number;
+  public screenGapBetween: number;
+  public screenGapRight: number;
+  public screenGapBottom: number;
+  public gapsOverrideConfig: string[];
+  public limitTileWidthRatio: number;
+  /*
+   * Behavior
+   * */
+  public adjustLayout: boolean;
+  public adjustLayoutLive: boolean;
+  public directionalKeyMode: "dwm" | "focus";
+  public newWindowPosition: number;
+  /*
+   * Rules
+   * */
+  public ignoreClass: string[];
+  public ignoreTitle: string[];
+  public ignoreRole: string[];
 
-  public soleWindowWidth: number;
-  public soleWindowHeight: number;
-  public soleWindowNoBorders: boolean;
-  public soleWindowNoGaps: boolean;
-  public unfitGreater: boolean;
-  public unfitLess: boolean;
-  public tiledWindowsLayer: number;
-  public floatedWindowsLayer: number;
-  //#endregion
-  // Dock parameters
+  public floatingClass: string[];
+  public floatingTitle: string[];
+  public floatDefault: boolean;
+  public floatUtility: boolean;
+
+  public ignoreActivity: string[];
+  public ignoreScreen: string[];
+  public ignoreVDesktop: string[];
+  public tileNothing: boolean;
+  public tilingClass: string[];
+
+  public screenDefaultLayout: string[];
+  /*
+   * Dock
+   * */
   public dockOrder: [number, number, number, number];
   public dockHHeight: number;
   public dockHWide: number;
@@ -70,57 +98,38 @@ class KWinConfig implements IConfig {
   public dockVEdgeAlignment: number;
   public dockSurfacesConfig: string[];
   public dockWindowClassConfig: string[];
+  /*
+   * Options
+   * */
+  public tiledWindowsLayer: number;
+  public floatedWindowsLayer: number;
 
-  //#region Features
-  public adjustLayout: boolean;
-  public adjustLayoutLive: boolean;
-  public keepTilingOnDrag: boolean;
+  public soleWindowWidth: number;
+  public soleWindowHeight: number;
+  public soleWindowNoBorders: boolean;
+  public soleWindowNoGaps: boolean;
+
+  floatInitWindowWidth: number;
+  floatInitWindowHeight: number;
+  floatRandomize: boolean;
+  floatRandomWidth: number;
+  floatRandomHeight: number;
+
+  public unfitGreater: boolean;
+  public unfitLess: boolean;
+
   public notificationDuration: number;
-  public noTileBorder: boolean;
-  public limitTileWidthRatio: number;
-  //#endregion
 
-  //#region Gap
-  public screenGapBottom: number;
-  public screenGapLeft: number;
-  public screenGapRight: number;
-  public screenGapTop: number;
-  public screenGapBetween: number;
-  public gapsOverrideConfig: string[];
-  //#endregion
-
-  //#region Behavior
-  public directionalKeyMode: "dwm" | "focus";
-  public newWindowPosition: number;
-  //#endregion
-
-  //#region kwin.specific
   public layoutPerActivity: boolean;
   public layoutPerDesktop: boolean;
+  public noTileBorder: boolean;
+  public keepTilingOnDrag: boolean;
   public preventMinimize: boolean;
   public preventProtrusion: boolean;
   public floatSkipPager: boolean;
-  //#endregion
-
-  //#region kwin.specific Rules
-  public floatUtility: boolean;
-
-  public floatingClass: string[];
-  public floatingTitle: string[];
-  public ignoreClass: string[];
-  public floatDefault: boolean;
-  public ignoreTitle: string[];
-  public ignoreRole: string[];
-
-  public ignoreActivity: string[];
-  public ignoreScreen: string[];
-  public ignoreVDesktop: string[];
-
-  public screenDefaultLayout: string[];
-
-  public tileNothing: boolean;
-  public tilingClass: string[];
-  //#endregion
+  /*
+   * Log
+   * */
 
   constructor() {
     function separate(str: string, separator: string): string[] {
@@ -285,6 +294,36 @@ class KWinConfig implements IConfig {
     this.soleWindowHeight = KWIN.readConfig("soleWindowHeight", 100);
     this.soleWindowNoBorders = KWIN.readConfig("soleWindowNoBorders", false);
     this.soleWindowNoGaps = KWIN.readConfig("soleWindowNoGaps", false);
+
+    this.floatInitWindowWidth = validateNumberWithDefault(
+      KWIN.readConfig("floatInitWindowWidth", 50),
+      50,
+      "floatInitWindowWidth",
+      1,
+      100
+    );
+    this.floatInitWindowHeight = validateNumberWithDefault(
+      KWIN.readConfig("floatInitWindowHeight", 50),
+      50,
+      "floatInitWindowHeight",
+      1,
+      100
+    );
+    this.floatRandomize = KWIN.readConfig("floatRandomize", true);
+    this.floatRandomWidth = validateNumberWithDefault(
+      KWIN.readConfig("floatRandomWidth", 15),
+      15,
+      "floatRandomWidth",
+      1,
+      100
+    );
+    this.floatRandomHeight = validateNumberWithDefault(
+      KWIN.readConfig("floatRandomHeight", 15),
+      15,
+      "floatRandomHeight",
+      1,
+      100
+    );
 
     this.unfitGreater = KWIN.readConfig("unfitGreater", true);
     this.unfitLess = KWIN.readConfig("unfitLess", true);

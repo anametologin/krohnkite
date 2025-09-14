@@ -252,17 +252,6 @@ class KWinWindow implements IDriverWindow {
       width = this.window.width;
       height = this.window.height;
     } else {
-      /* respect resize increment */
-      // if (
-      //   !(
-      //     this.window.basicUnit.width === 1 &&
-      //     this.window.basicUnit.height === 1
-      //   )
-      // )
-      //   /* NOT free-size */
-      //   [width, height] = this.applyResizeIncrement(geometry);
-
-      /* respect min/max size limit */
       width = clip(width, this.window.minSize.width, this.window.maxSize.width);
       height = clip(
         height,
@@ -274,33 +263,45 @@ class KWinWindow implements IDriverWindow {
     return new Rect(geometry.x, geometry.y, width, height);
   }
 
-  // private applyResizeIncrement(geom: Rect): [number, number] {
-  //   const unit = this.window.basicUnit;
-  //   const base = this.window.minSize;
-  //
-  //   const padWidth = this.window.geometry.width - this.window.clientSize.width;
-  //   const padHeight =
-  //     this.window.geometry.height - this.window.clientSize.height;
-  //
-  //   const quotWidth = Math.floor(
-  //     (geom.width - base.width - padWidth) / unit.width
-  //   );
-  //   const quotHeight = Math.floor(
-  //     (geom.height - base.height - padHeight) / unit.height
-  //   );
-  //
-  //   const newWidth = base.width + unit.width * quotWidth + padWidth;
-  //   const newHeight = base.height + unit.height * quotHeight + padHeight;
-  //
-  //   // debugObj(() => ["applyResizeIncrement", {
-  //   //     // tslint:disable-next-line:object-literal-sort-keys
-  //   //     unit, base, geom,
-  //   //     pad: [padWidth, padHeight].join("x"),
-  //   //     size: [newWidth, newHeight].join("x"),
-  //   // }]);
-  //
-  //   return [newWidth, newHeight];
-  // }
+  public getInitFloatGeometry(): Rect {
+    let outputGeometry = this.window.output.geometry;
+    let width, height, x, y: number;
+    width = outputGeometry.width * (CONFIG.floatInitWindowWidth / 100);
+    height = outputGeometry.height * (CONFIG.floatInitWindowHeight / 100);
+    x = outputGeometry.x + outputGeometry.width / 2 - width / 2;
+    y = outputGeometry.y + outputGeometry.height / 2 - height / 2;
+    if (
+      this.window.minSize.width > outputGeometry.width ||
+      this.window.minSize.height > outputGeometry.height
+    ) {
+      width = this.window.minSize.width;
+      height = this.window.minSize.height;
+      x = outputGeometry.x;
+      y = outputGeometry.y;
+    } else if (
+      !this.window.resizeable ||
+      this.window.maxSize.width < width ||
+      this.window.maxSize.height < height
+    ) {
+      width = this.window.maxSize.width;
+      height = this.window.maxSize.height;
+    } else {
+      if (CONFIG.floatRandomize) {
+        x =
+          x +
+          getRandomInt(
+            (x - outputGeometry.x) * (CONFIG.floatRandomWidth / 100),
+            true
+          );
+        y =
+          y +
+          getRandomInt(
+            (y - outputGeometry.y) * (CONFIG.floatRandomHeight / 100),
+            true
+          );
+      }
+    }
 
-  //#endregion
+    return new Rect(x, y, width, height);
+  }
 }

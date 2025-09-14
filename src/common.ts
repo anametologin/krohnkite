@@ -232,6 +232,12 @@ interface IConfig {
   soleWindowNoBorders: boolean;
   soleWindowNoGaps: boolean;
 
+  floatInitWindowWidth: number;
+  floatInitWindowHeight: number;
+  floatRandomize: boolean;
+  floatRandomWidth: number;
+  floatRandomHeight: number;
+
   unfitGreater: boolean;
   unfitLess: boolean;
 
@@ -264,6 +270,7 @@ interface IDriverWindow {
 
   commit(geometry?: Rect, noBorder?: boolean, windowLayer?: WindowLayer): void;
   visible(srf: ISurface): boolean;
+  getInitFloatGeometry(): Rect;
 }
 
 interface ISurfaceStore {

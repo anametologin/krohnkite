@@ -56,3 +56,32 @@ function validateNumber(
   }
   return num;
 }
+
+function validateNumberWithDefault(
+  value: string | number,
+  defaultValue: number,
+  errMess: string,
+  from?: number,
+  to?: number,
+  float = false
+): number {
+  let num;
+  const err = `validateNumber: ${errMess}. param: ${value}. Error:`;
+  if (typeof value === "number") {
+    num = value;
+  } else {
+    num = parseNumber(value, float);
+    if (num instanceof Err) {
+      warning(`${err}${num.toString()}`);
+      return defaultValue;
+    }
+  }
+  if (from !== undefined && num < from) {
+    warning(`${err}Number must be greater than or equal to ${from}`);
+    return defaultValue;
+  } else if (to !== undefined && num > to) {
+    warning(`${err}Number must be less than or equal to ${to}`);
+    return defaultValue;
+  }
+  return num;
+}
