@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2025 Vjatcheslav V. Kolchkov <akl334@protonmail.ch>
+// This code is licensed under MIT license (see LICENSE for details)
+
 function debugWin(win: Window): string {
   var w_props: { name: string; opt: any }[] = [
     { name: "caption", opt: win.caption },

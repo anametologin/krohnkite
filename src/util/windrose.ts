@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2025 Vjatcheslav V. Kolchkov <akl334@protonmail.ch>
+// This code is licensed under MIT license (see LICENSE for details)
+
 const enum CardinalDirection {
   North,
   East,
