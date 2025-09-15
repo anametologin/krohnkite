@@ -302,9 +302,9 @@ class TilingEngine {
     let overCapacity: WindowClass[];
     if (capacity !== null && tileables.length > capacity) {
       if (!CONFIG.surfacesIsMoveOldestWindows) {
-        overCapacity = tileables.splice(0, tileables.length - capacity);
-      } else {
         overCapacity = tileables.splice(capacity - tileables.length);
+      } else {
+        overCapacity = tileables.splice(0, tileables.length - capacity);
       }
       capacity = 0;
     } else {
