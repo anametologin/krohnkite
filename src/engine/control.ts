@@ -1,6 +1,9 @@
-// Copyright (c) 2018-2019 Eon S. Jeon <esjeon@hyunmu.am>
-// Copyright (c) 2024-2025 Vjatcheslav V. Kolchkov <akl334@protonmail.ch>
-// This code is licensed under MIT license (see LICENSE for details)
+/*
+    SPDX-FileCopyrightText: 2018 Eon S. Jeon <esjeon@hyunmu.am>
+    SPDX-FileCopyrightText: 2024 Vjatcheslav V. Kolchkov <akl334@protonmail.ch>
+
+    SPDX-License-Identifier: MIT
+*/
 
 /**
  * TilingController translates events to actions, implementing high-level
