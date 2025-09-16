@@ -129,11 +129,17 @@ class KWinSurface implements ISurface {
   public static generateId(
     output: Output,
     activity: string,
-    vDesktop: VirtualDesktop
+    vDesktop: VirtualDesktop,
+    isLayoutId: boolean = false
   ): string {
     let path = output.name;
-    if (KWINCONFIG.layoutPerActivity) path += "@" + activity;
-    if (KWINCONFIG.layoutPerDesktop) path += "#" + vDesktop.id;
+    if (isLayoutId) {
+      if (KWINCONFIG.layoutPerActivity) path += "@" + activity;
+      if (KWINCONFIG.layoutPerDesktop) path += "#" + vDesktop.id;
+    } else {
+      path += "@" + activity;
+      path += "#" + vDesktop.id;
+    }
     return KWinSurface.getHash(path);
   }
 
@@ -158,6 +164,7 @@ class KWinSurface implements ISurface {
   public output: Output;
 
   public readonly id: string;
+  public readonly layoutId: string;
   public readonly ignore: boolean;
   public readonly activity: string;
   public readonly vDesktop: VirtualDesktop;
@@ -173,6 +180,7 @@ class KWinSurface implements ISurface {
     surfaceConfig: ISurfaceCfg | null
   ) {
     this.id = KWinSurface.generateId(output, activity, vDesktop);
+    this.layoutId = KWinSurface.generateId(output, activity, vDesktop, true);
     this.ignore =
       KWINCONFIG.ignoreActivity.indexOf(activity) >= 0 ||
       KWINCONFIG.ignoreScreen.indexOf(output.name) >= 0 ||

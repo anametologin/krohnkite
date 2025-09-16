@@ -272,6 +272,7 @@ interface ISurface {
   capacity: number | null;
   output: Output;
   readonly id: string;
+  readonly layoutId: string;
   readonly ignore: boolean;
   readonly workingArea: Readonly<Rect>;
   readonly activity: string;

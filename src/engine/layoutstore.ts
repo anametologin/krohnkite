@@ -136,7 +136,7 @@ class LayoutStore {
   }
 
   private getEntry(srf: ISurface): LayoutStoreEntry {
-    if (!this.store[srf.id]) {
+    if (!this.store[srf.layoutId]) {
       // check if this surface but without activity already constructed.
       // surface create after desktop and constructor ran twice
       let key_without_activity = KWinSurface.generateId(
@@ -145,16 +145,16 @@ class LayoutStore {
         srf.vDesktop
       );
       if (this.store[key_without_activity]) {
-        this.store[srf.id] = this.store[key_without_activity];
+        this.store[srf.layoutId] = this.store[key_without_activity];
         delete this.store[key_without_activity];
       } else {
-        this.store[srf.id] = new LayoutStoreEntry(
+        this.store[srf.layoutId] = new LayoutStoreEntry(
           srf.output.name,
           srf.vDesktop.name,
           srf.activity
         );
       }
     }
-    return this.store[srf.id];
+    return this.store[srf.layoutId];
   }
 }
