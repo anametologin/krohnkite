@@ -54,7 +54,7 @@ class TilingEngine {
         gaps.left,
         gaps.right,
         gaps.top,
-        gaps.bottom
+        gaps.bottom,
       );
       const tiles = this.windows.getVisibleTiles(srf);
       layout.adjust(area, tiles, basis, delta, gaps.between);
@@ -92,7 +92,7 @@ class TilingEngine {
   public resizeFloat(
     window: WindowClass,
     dir: "east" | "west" | "south" | "north",
-    step: -1 | 1
+    step: -1 | 1,
   ) {
     const srf = window.surface;
 
@@ -103,16 +103,16 @@ class TilingEngine {
     let hStep, vStep;
     switch (dir) {
       case "east":
-        (hStep = step), (vStep = 0);
+        ((hStep = step), (vStep = 0));
         break;
       case "west":
-        (hStep = -step), (vStep = 0);
+        ((hStep = -step), (vStep = 0));
         break;
       case "south":
-        (hStep = 0), (vStep = step);
+        ((hStep = 0), (vStep = step));
         break;
       case "north":
-        (hStep = 0), (vStep = -step);
+        ((hStep = 0), (vStep = -step));
         break;
     }
 
@@ -131,7 +131,7 @@ class TilingEngine {
   public resizeTile(
     basis: WindowClass,
     dir: "east" | "west" | "south" | "north",
-    step: -1 | 1
+    step: -1 | 1,
   ) {
     const srf = basis.surface;
     const gaps = this.getGaps(srf);
@@ -182,14 +182,14 @@ class TilingEngine {
         gaps.left,
         gaps.right,
         gaps.top,
-        gaps.bottom
+        gaps.bottom,
       );
       layout.adjust(
         area,
         this.windows.getVisibleTileables(srf),
         basis,
         delta,
-        gaps.between
+        gaps.between,
       );
     }
   }
@@ -205,7 +205,7 @@ class TilingEngine {
   public resizeWindow(
     window: WindowClass,
     dir: "east" | "west" | "south" | "north",
-    step: -1 | 1
+    step: -1 | 1,
   ) {
     const state = window.state;
     if (WindowClass.isFloatingState(state)) this.resizeFloat(window, dir, step);
@@ -220,7 +220,7 @@ class TilingEngine {
     LOG?.send(
       LogModules.arrangeScreen,
       "ArrangeScreens",
-      `###################################################Reason: ${reason}####################################`
+      `###################################################Reason: ${reason}####################################`,
     );
     const surfaces = ctx.currentSurfaces;
     let screensData: ScreenData[] = [];
@@ -237,17 +237,17 @@ class TilingEngine {
               sd.awaitToMove.push(
                 ...screenData.overCapacity.splice(
                   0,
-                  screenData.overCapacity.length
-                )
+                  screenData.overCapacity.length,
+                ),
               );
               isMoving = true;
             } else if (sd.capacity - sd.awaitToMove.length > 0) {
               const availableSlots = Math.min(
                 sd.capacity - sd.awaitToMove.length,
-                screenData.overCapacity.length
+                screenData.overCapacity.length,
               );
               sd.awaitToMove.push(
-                ...screenData.overCapacity.splice(0, availableSlots)
+                ...screenData.overCapacity.splice(0, availableSlots),
               );
               isMoving = true;
             }
@@ -335,8 +335,8 @@ class TilingEngine {
       }, layout: ${
         screenData.layout
       },capacity: ${capacity}, overCapacity: ${screenData.overCapacity.map(
-        (win) => win.window.windowClassName
-      )}`
+        (win) => win.window.windowClassName,
+      )}`,
     );
     return screenData;
   }
@@ -348,7 +348,7 @@ class TilingEngine {
     LOG?.send(
       LogModules.arrangeScreen,
       "arrangeScreen",
-      `output: ${screenData.srf.output.name}`
+      `output: ${screenData.srf.output.name}`,
     );
     screenData.overCapacity.forEach((win) => {
       win.state = WindowState.Floating;
@@ -380,7 +380,7 @@ class TilingEngine {
         gaps.left,
         gaps.right,
         gaps.top,
-        gaps.bottom
+        gaps.bottom,
       );
 
     let tileablesLen = screenData.tileables.length;
@@ -391,20 +391,20 @@ class TilingEngine {
           engineCtx,
           screenData.tileables,
           tilingArea,
-          gaps.between
+          gaps.between,
         );
         if (LOG?.isModuleOn(LogModules.arrangeScreen)) {
           let mes = "";
           screenData.tileables.forEach((tile) => {
             mes += `${tile.id}, state:${windowStateStr(
-              tile.state
+              tile.state,
             )}, commitGeometry:${tile.geometry}\n`;
           });
           LOG?.send(LogModules.arrangeScreen, "LayoutApply", mes);
         }
       }
       function getNumberTileablesGreaterThenMin(
-        tileables: WindowClass[]
+        tileables: WindowClass[],
       ): number {
         let numberOfTiles = 0;
         tileables.forEach((tile) => {
@@ -439,7 +439,7 @@ class TilingEngine {
                 tile.maxSize.height
               } heightUnfit: ${
                 tile.maxSize.height < tile.geometry.height
-              }, widthUnfit: ${tile.maxSize.width < tile.geometry.width}`
+              }, widthUnfit: ${tile.maxSize.width < tile.geometry.width}`,
             );
             tile.state = WindowState.Floating;
             return false;
@@ -461,11 +461,11 @@ class TilingEngine {
           LOG?.send(
             LogModules.arrangeScreen,
             "UnfitGreater",
-            `unfitGreaterQuantity: ${unfitGreaterQuantity}`
+            `unfitGreaterQuantity: ${unfitGreaterQuantity}`,
           );
           if (screenData.tileables.length !== tileablesLen) {
             unfitGreaterQuantity = getNumberTileablesGreaterThenMin(
-              screenData.tileables
+              screenData.tileables,
             );
           }
           while (screenData.tileables.length > 0 && unfitGreaterQuantity > 0) {
@@ -473,7 +473,7 @@ class TilingEngine {
             tile!.state = WindowState.Floating;
             layoutApply();
             unfitGreaterQuantity = getNumberTileablesGreaterThenMin(
-              screenData.tileables
+              screenData.tileables,
             );
           }
         }
@@ -485,7 +485,7 @@ class TilingEngine {
       !(screenData.layout instanceof MonocleLayout)
     ) {
       const maxWidth = Math.floor(
-        screenData.workingArea.height * CONFIG.limitTileWidthRatio
+        screenData.workingArea.height * CONFIG.limitTileWidthRatio,
       );
       screenData.tileables
         .filter((tile) => tile.tiled && tile.geometry.width > maxWidth)
@@ -495,7 +495,7 @@ class TilingEngine {
             g.x + Math.floor((g.width - maxWidth) / 2),
             g.y,
             maxWidth,
-            g.height
+            g.height,
           );
         });
     }
@@ -512,7 +512,7 @@ class TilingEngine {
     LOG?.send(
       LogModules.arrangeScreen,
       "#######################################################Finished",
-      `${screenData.srf}`
+      `${screenData.srf}`,
     );
   }
 
@@ -667,16 +667,16 @@ class TilingEngine {
     let hStep, vStep;
     switch (dir) {
       case "up":
-        (hStep = 0), (vStep = -1);
+        ((hStep = 0), (vStep = -1));
         break;
       case "down":
-        (hStep = 0), (vStep = 1);
+        ((hStep = 0), (vStep = 1));
         break;
       case "left":
-        (hStep = -1), (vStep = 0);
+        ((hStep = -1), (vStep = 0));
         break;
       case "right":
-        (hStep = 1), (vStep = 0);
+        ((hStep = 1), (vStep = 0));
         break;
     }
 
@@ -752,8 +752,6 @@ class TilingEngine {
 
     if (numFloats === 0) {
       windows.forEach((window) => {
-        /* TODO: do not use arbitrary constants */
-        window.floatGeometry = window.actualGeometry.gap(4, 4, 4, 4);
         window.state = WindowState.Floating;
       });
       ctx.showNotification("Float All");
@@ -800,7 +798,7 @@ class TilingEngine {
   public handleLayoutShortcut(
     ctx: IDriverContext,
     input: Shortcut,
-    data?: any
+    data?: any,
   ): boolean {
     const layout = this.layouts.getCurrentLayout(ctx.currentSurface);
     if (layout.handleShortcut)
@@ -815,7 +813,7 @@ class TilingEngine {
   public handleDockShortcut(
     ctx: IDriverContext,
     window: WindowClass,
-    input: Shortcut
+    input: Shortcut,
   ): boolean {
     return this.docks.handleShortcut(ctx, window, input);
   }
@@ -823,7 +821,7 @@ class TilingEngine {
   private getNeighborByDirection(
     ctx: IDriverContext,
     basis: WindowClass,
-    dir: Direction
+    dir: Direction,
   ): WindowClass | null {
     let vertical: boolean;
     let sign: -1 | 1;
@@ -853,7 +851,7 @@ class TilingEngine {
       .filter(
         vertical
           ? (tile) => tile.geometry.y * sign > basis.geometry.y * sign
-          : (tile) => tile.geometry.x * sign > basis.geometry.x * sign
+          : (tile) => tile.geometry.x * sign > basis.geometry.x * sign,
       )
       .filter(
         vertical
@@ -862,15 +860,15 @@ class TilingEngine {
                 basis.geometry.x,
                 basis.geometry.maxX,
                 tile.geometry.x,
-                tile.geometry.maxX
+                tile.geometry.maxX,
               )
           : (tile) =>
               overlap(
                 basis.geometry.y,
                 basis.geometry.maxY,
                 tile.geometry.y,
-                tile.geometry.maxY
-              )
+                tile.geometry.maxY,
+              ),
       );
     if (candidates.length === 0) return null;
 
@@ -881,13 +879,13 @@ class TilingEngine {
           ? (prevMin, tile): number => Math.min(tile.geometry.y * sign, prevMin)
           : (prevMin, tile): number =>
               Math.min(tile.geometry.x * sign, prevMin),
-        Infinity
+        Infinity,
       );
 
     const closest = candidates.filter(
       vertical
         ? (tile) => tile.geometry.y === min
-        : (tile) => tile.geometry.x === min
+        : (tile) => tile.geometry.x === min,
     );
 
     return closest.sort((a, b) => b.timestamp - a.timestamp)[0];
@@ -899,7 +897,7 @@ class TilingEngine {
       this._gapsSurfacesCfg = gapsSurfaceCfg.parseGapsUserSurfacesCfg();
     }
     const surfaceCfg = this._gapsSurfacesCfg.find((surfaceCfg) =>
-      surfaceCfg.isFit(srf)
+      surfaceCfg.isFit(srf),
     );
     if (surfaceCfg === undefined) return this._defaultGaps;
     return surfaceCfg.cfg;
