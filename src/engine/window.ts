@@ -157,12 +157,12 @@ class WindowClass {
     this.id = window.id;
     this.window = window;
 
-    this._floatGeometry = null;
     this.geometry = window.geometry;
     this.timestamp = 0;
 
     this.internalState = WindowState.Unmanaged;
     this.shouldCommitFloat = this.shouldFloat;
+    this._floatGeometry = this.shouldCommitFloat ? this.geometry : null;
     this.weightMap = {};
     this.dock = null;
 
@@ -182,7 +182,7 @@ class WindowClass {
       "commit",
       `id: ${this.id}, state: ${windowStateStr(state)}, floatGeometry: ${
         this.floatGeometry
-      }, commitGeometry: ${this.geometry}, noBorders: ${noBorders}`
+      }, commitGeometry: ${this.geometry}, noBorders: ${noBorders}`,
     );
     switch (state) {
       case WindowState.Dragging:
@@ -200,7 +200,7 @@ class WindowClass {
         this.window.commit(
           this.floatGeometry,
           false,
-          CONFIG.floatedWindowsLayer
+          CONFIG.floatedWindowsLayer,
         );
         this.shouldCommitFloat = false;
         break;
@@ -213,7 +213,7 @@ class WindowClass {
         this.window.commit(
           this.geometry,
           CONFIG.noTileBorder || Boolean(noBorders),
-          CONFIG.tiledWindowsLayer
+          CONFIG.tiledWindowsLayer,
         );
         break;
 
@@ -222,7 +222,7 @@ class WindowClass {
         this.window.commit(
           this.floatGeometry,
           false,
-          CONFIG.floatedWindowsLayer
+          CONFIG.floatedWindowsLayer,
         );
         this.shouldCommitFloat = false;
         break;
@@ -230,14 +230,14 @@ class WindowClass {
         this.window.commit(
           this.geometry,
           CONFIG.noTileBorder || Boolean(noBorders),
-          CONFIG.floatedWindowsLayer
+          CONFIG.floatedWindowsLayer,
         );
         break;
       case WindowState.Docked:
         this.window.commit(
           this.geometry,
           CONFIG.noTileBorder,
-          CONFIG.tiledWindowsLayer
+          CONFIG.tiledWindowsLayer,
         );
         break;
     }

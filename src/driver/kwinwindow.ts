@@ -72,7 +72,7 @@ class KWinWindow implements IDriverWindow {
     return this._surfaceStore.getSurface(
       this.window.output,
       activity,
-      vDesktop
+      vDesktop,
     );
   }
 
@@ -112,7 +112,7 @@ class KWinWindow implements IDriverWindow {
   constructor(
     window: Window,
     workspace: Workspace,
-    surfaceStore: KWinSurfaceStore
+    surfaceStore: KWinSurfaceStore,
   ) {
     this.workspace = workspace;
     this._surfaceStore = surfaceStore;
@@ -137,12 +137,12 @@ class KWinWindow implements IDriverWindow {
   public commit(
     geometry?: Rect,
     noBorder?: boolean,
-    windowLayer?: WindowLayer
+    windowLayer?: WindowLayer,
   ) {
     LOG?.send(
       LogModules.window,
       "KwinWindow#commit",
-      `geometry:${geometry}, noBorder:${noBorder}, windowLayer:${windowLayer}`
+      `geometry:${geometry}, noBorder:${noBorder}, windowLayer:${windowLayer}`,
     );
     if (this.window.move || this.window.resize) return;
 
@@ -182,8 +182,8 @@ class KWinWindow implements IDriverWindow {
           this.workspace.clientArea(
             ClientAreaOption.PlacementArea,
             this.window.output,
-            this.workspace.currentDesktop
-          )
+            this.workspace.currentDesktop,
+          ),
         );
         if (!area.includes(geometry)) {
           /* assume windows will extrude only through right and bottom edges */
@@ -243,7 +243,7 @@ class KWinWindow implements IDriverWindow {
       height = clip(
         height,
         this.window.minSize.height,
-        this.window.maxSize.height
+        this.window.maxSize.height,
       );
     }
 
@@ -272,19 +272,21 @@ class KWinWindow implements IDriverWindow {
     ) {
       width = this.window.maxSize.width;
       height = this.window.maxSize.height;
+      x = outputGeometry.x + outputGeometry.width / 2 - width / 2;
+      y = outputGeometry.y + outputGeometry.height / 2 - height / 2;
     } else {
       if (CONFIG.floatRandomize) {
         x =
           x +
           getRandomInt(
             (x - outputGeometry.x) * (CONFIG.floatRandomWidth / 100),
-            true
+            true,
           );
         y =
           y +
           getRandomInt(
             (y - outputGeometry.y) * (CONFIG.floatRandomHeight / 100),
-            true
+            true,
           );
       }
     }
