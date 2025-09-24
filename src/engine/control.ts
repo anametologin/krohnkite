@@ -16,11 +16,13 @@ class TilingController {
   public engine: TilingEngine;
   private isDragging: boolean;
   private dragCompleteTime: number | null;
+  private _metaShortcuts: { [key: string]: Shortcut };
 
   public constructor(engine: TilingEngine) {
     this.engine = engine;
     this.isDragging = false;
     this.dragCompleteTime = null;
+    this._metaShortcuts = this._initMetaShortcuts();
   }
 
   public onSurfaceUpdate(ctx: IDriverContext): void {
@@ -52,12 +54,13 @@ class TilingController {
   public onWindowSkipPagerChanged(
     ctx: IDriverContext,
     window: WindowClass,
-    skipPager: boolean
+    skipPager: boolean,
   ) {
     if (skipPager) window.state = WindowState.Floating;
     else window.state = WindowState.Undecided;
     this.engine.arrange(ctx, getMethodName());
   }
+
   public onWindowRemoved(ctx: IDriverContext, window: WindowClass): void {
     this.engine.unmanage(window);
     this.engine.arrange(ctx, getMethodName());
@@ -74,7 +77,7 @@ class TilingController {
   public onWindowDragging(
     ctx: IDriverContext,
     window: WindowClass,
-    windowRect: Rect
+    windowRect: Rect,
   ): void {
     if (this.isDragging) return;
     // 100 milliseconds - min interval between run this function
@@ -97,7 +100,7 @@ class TilingController {
           new EngineContext(ctx, this.engine),
           toRect(windowRect),
           window,
-          srf.workingArea as Rect
+          srf.workingArea as Rect,
         )
       ) {
         this.engine.arrange(ctx, getMethodName());
@@ -122,7 +125,7 @@ class TilingController {
 
       const targets = tiles.filter(
         (tile) =>
-          tile !== window && tile.actualGeometry.includesPoint(cursorPos)
+          tile !== window && tile.actualGeometry.includesPoint(cursorPos),
       );
 
       if (targets.length === 1) {
@@ -179,14 +182,14 @@ class TilingController {
 
   public onWindowMaximizeChanged(
     ctx: IDriverContext,
-    window: WindowClass
+    window: WindowClass,
   ): void {
     this.engine.arrange(ctx, getMethodName());
   }
 
   public onWindowGeometryChanged(
     ctx: IDriverContext,
-    window: WindowClass
+    window: WindowClass,
   ): void {
     this.engine.enforceSize(ctx, window);
   }
@@ -196,7 +199,7 @@ class TilingController {
   public onWindowChanged(
     ctx: IDriverContext,
     window: WindowClass | null,
-    comment?: string
+    comment?: string,
   ): void {
     if (window) {
       if (comment === "unminimized") ctx.currentWindow = window;
@@ -218,12 +221,25 @@ class TilingController {
   public onWindowFocused(ctx: IDriverContext, window: WindowClass) {
     window.timestamp = new Date().getTime();
   }
+
   public onDesktopsChanged(ctx: IDriverContext, window: WindowClass) {
     if (window.state !== WindowState.Docked)
       window.state = WindowState.Undecided;
   }
 
   public onShortcut(ctx: IDriverContext, input: Shortcut, data?: any) {
+    if (input === Shortcut.KrohnkiteMeta) {
+      ctx.metaPushed();
+      return;
+    }
+    let metaShortcut;
+    if (
+      ctx.isMetaMode &&
+      (metaShortcut = this._getMetaShortcut(input)) !== null
+    ) {
+      input = metaShortcut;
+    }
+
     let isArrangeNeeded = true;
     if (CONFIG.directionalKeyMode === "dwm") {
       switch (input) {
@@ -257,6 +273,7 @@ class TilingController {
       }
     }
 
+    let currentCapacity: number | null;
     const window = ctx.currentWindow;
     if (
       window !== null &&
@@ -407,17 +424,51 @@ class TilingController {
         break;
 
       case Shortcut.RaiseSurfaceCapacity:
-        let raisedCap = this.engine.raiseSurfaceCapacity(ctx);
+        currentCapacity = this.engine.raiseSurfaceCapacity(ctx);
         ctx.showNotification(
-          `Surface capacity: ${raisedCap !== null ? raisedCap : "unlimited"}`
+          `Surface capacity: ${currentCapacity !== null ? currentCapacity : "unlimited"}`,
         );
         break;
       case Shortcut.LowerSurfaceCapacity:
-        let loweredCap = this.engine.lowerSurfaceCapacity(ctx);
-        ctx.showNotification(`Surface capacity: ${loweredCap}`);
+        currentCapacity = this.engine.lowerSurfaceCapacity(ctx);
+        ctx.showNotification(`Surface capacity: ${currentCapacity}`);
+        break;
+      case Shortcut.ResetSurfaceCapacity:
+        currentCapacity = this.engine.ResetSurfaceCapacity(ctx);
+        ctx.showNotification(
+          `Surface capacity: ${currentCapacity !== null ? currentCapacity : "unlimited"}`,
+        );
+        isArrangeNeeded = false;
         break;
     }
     if (!isArrangeNeeded) return;
     this.engine.arrange(ctx, getMethodName());
+  }
+
+  private _initMetaShortcuts() {
+    let metaShortcuts: { [key: string]: Shortcut } = {};
+    CONFIG.metaConfig.forEach((shortcutPair) => {
+      let splitted = shortcutPair.split("=").map((p) => p.trim());
+      if (splitted.length !== 2) {
+        warning(`"Meta Config: ${splitted}" have to has the one equal sign`);
+        return;
+      }
+      let [pushedShortcut, runShortcut] = splitted;
+      if (!(pushedShortcut in Shortcut)) {
+        warning(`Meta Config: "${pushedShortcut}" unknown shortcut`);
+        return;
+      } else if (!(runShortcut in Shortcut)) {
+        warning(`Meta Config: "${runShortcut}" unknown shortcut`);
+        return;
+      }
+      metaShortcuts[pushedShortcut] = runShortcut as Shortcut;
+    });
+    return metaShortcuts;
+  }
+
+  private _getMetaShortcut(input: Shortcut): Shortcut | null {
+    if (input in this._metaShortcuts) {
+      return this._metaShortcuts[input];
+    } else return null;
   }
 }

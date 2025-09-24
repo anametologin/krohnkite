@@ -47,6 +47,10 @@ class KWinConfig implements IConfig {
   public adjustLayout: boolean;
   public adjustLayoutLive: boolean;
   public directionalKeyMode: "dwm" | "focus";
+  public metaConfig: string[];
+  public metaTimeout: number;
+  public metaIsToggle: boolean;
+  public metaIsPushedTwice: boolean;
   public newWindowPosition: number;
   /*
    * Rules
@@ -131,19 +135,19 @@ class KWinConfig implements IConfig {
      **************************/
     this.tileLayoutInitialAngle = KWIN.readConfig(
       "tileLayoutInitialRotationAngle",
-      "0"
+      "0",
     );
     this.monocleMaximize = KWIN.readConfig("monocleMaximize", true);
     this.monocleMinimizeRest = KWIN.readConfig("monocleMinimizeRest", false);
     this.quarterLayoutReset = KWIN.readConfig("quarterLayoutReset", false);
     this.columnsLayoutInitialAngle = KWIN.readConfig(
       "columnsLayoutInitialRotationAngle",
-      "0"
+      "0",
     );
     this.columnsBalanced = KWIN.readConfig("columnsBalanced", false);
     this.columnsLayerConf = separate(
       KWIN.readConfig("columnsLayerConf", ""),
-      ","
+      ",",
     );
     this.stairReverse = KWIN.readConfig("stairReverse", false);
 
@@ -169,22 +173,22 @@ class KWinConfig implements IConfig {
       this.layoutOrder.push(layoutClass.id);
     });
 
-    /***************************
-     ****************** Surfaces
-     **************************/
+    //***************************
+    //****************** Surfaces
+    //***************************
     this.surfacesDefaultConfig = separate(
       KWIN.readConfig("surfacesDefaultConfig", ""),
-      "\n"
+      "\n",
     );
     this.surfacesIsMoveWindows = KWIN.readConfig("surfacesIsMoveWindows", true);
     this.surfacesIsMoveOldestWindows = KWIN.readConfig(
       "surfacesIsMoveOldestWindows",
-      false
+      false,
     );
 
-    /***************************
-     ****************** Geometry
-     **************************/
+    //***************************
+    //****************** Geometry
+    //***************************
     this.screenGapTop = KWIN.readConfig("screenGapTop", 0);
     this.screenGapLeft = KWIN.readConfig("screenGapLeft", 0);
     this.screenGapBetween = KWIN.readConfig("screenGapBetween", 0);
@@ -192,31 +196,49 @@ class KWinConfig implements IConfig {
     this.screenGapBottom = KWIN.readConfig("screenGapBottom", 0);
     this.gapsOverrideConfig = separate(
       KWIN.readConfig("gapsOverrideConfig", ""),
-      "\n"
+      "\n",
     );
     this.limitTileWidthRatio = 0;
     if (KWIN.readConfig("limitTileWidth", false))
       this.limitTileWidthRatio = KWIN.readConfig("limitTileWidthRatio", 1.6);
 
-    /***************************
-     ****************** Behavior
-     **************************/
+    //***************************
+    //****************** Behavior
+    //***************************
     this.adjustLayout = KWIN.readConfig("adjustLayout", true);
     this.adjustLayoutLive = KWIN.readConfig("adjustLayoutLive", true);
     this.directionalKeyMode = KWIN.readConfig("directionalKeyFocus", true)
       ? "focus"
       : "dwm";
+
+    this.metaConfig = separate(
+      KWIN.readConfig(
+        "metaConfig",
+        "RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext",
+      ),
+      "\n",
+    );
+    this.metaTimeout = validateNumberWithDefault(
+      KWIN.readConfig("metaTimeout", 3000),
+      3000,
+      "metaTimeout",
+      100,
+      9999,
+    );
+    this.metaIsToggle = KWIN.readConfig("metaIsToggle", false);
+    this.metaIsPushedTwice = KWIN.readConfig("metaIsPushedTwice", false);
+
     this.newWindowPosition = KWIN.readConfig("newWindowPosition", 0);
 
-    /***************************
-     ****************** Rules
-     **************************/
+    //***************************
+    //****************** Rules
+    //***************************
     this.ignoreClass = separate(
       KWIN.readConfig(
         "ignoreClass",
-        "krunner,yakuake,spectacle,kded5,xwaylandvideobridge,plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1,org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter"
+        "krunner,yakuake,spectacle,kded5,xwaylandvideobridge,plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1,org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter",
       ),
-      ","
+      ",",
     );
     this.ignoreTitle = separate(KWIN.readConfig("ignoreTitle", ""), ",");
     this.ignoreRole = separate(KWIN.readConfig("ignoreRole", "quake"), ",");
@@ -234,12 +256,12 @@ class KWinConfig implements IConfig {
 
     this.screenDefaultLayout = separate(
       KWIN.readConfig("screenDefaultLayout", ""),
-      ","
+      ",",
     );
 
-    /***************************
-     ****************** Dock
-     **************************/
+    //***************************
+    //****************** Dock
+    //***************************
     this.dockOrder = [
       KWIN.readConfig("dockOrderLeft", 1),
       KWIN.readConfig("dockOrderTop", 2),
@@ -260,21 +282,21 @@ class KWinConfig implements IConfig {
     this.dockVEdgeAlignment = KWIN.readConfig("dockVEdgeAlignment", 0);
     this.dockSurfacesConfig = separate(
       KWIN.readConfig("dockSurfacesConfig", ""),
-      "\n"
+      "\n",
     );
     this.dockWindowClassConfig = separate(
       KWIN.readConfig("dockWindowClassConfig", ""),
-      "\n"
+      "\n",
     );
 
-    /***************************
-     ****************** Options
-     **************************/
+    //***************************
+    //****************** Options
+    //***************************
     this.tiledWindowsLayer = getWindowLayer(
-      KWIN.readConfig("tiledWindowsLayer", 0)
+      KWIN.readConfig("tiledWindowsLayer", 0),
     );
     this.floatedWindowsLayer = getWindowLayer(
-      KWIN.readConfig("floatedWindowsLayer", 1)
+      KWIN.readConfig("floatedWindowsLayer", 1),
     );
 
     this.soleWindowWidth = KWIN.readConfig("soleWindowWidth", 100);
@@ -287,14 +309,14 @@ class KWinConfig implements IConfig {
       50,
       "floatInitWindowWidth",
       1,
-      100
+      100,
     );
     this.floatInitWindowHeight = validateNumberWithDefault(
       KWIN.readConfig("floatInitWindowHeight", 50),
       50,
       "floatInitWindowHeight",
       1,
-      100
+      100,
     );
     this.floatRandomize = KWIN.readConfig("floatRandomize", true);
     this.floatRandomWidth = validateNumberWithDefault(
@@ -302,14 +324,14 @@ class KWinConfig implements IConfig {
       15,
       "floatRandomWidth",
       1,
-      100
+      100,
     );
     this.floatRandomHeight = validateNumberWithDefault(
       KWIN.readConfig("floatRandomHeight", 15),
       15,
       "floatRandomHeight",
       1,
-      100
+      100,
     );
 
     this.unfitGreater = KWIN.readConfig("unfitGreater", true);
@@ -328,9 +350,9 @@ class KWinConfig implements IConfig {
     this.preventProtrusion = KWIN.readConfig("preventProtrusion", true);
     this.floatSkipPager = KWIN.readConfig("floatSkipPagerWindows", false);
 
-    /***************************
-     ****************** Log
-     **************************/
+    //***************************
+    //****************** Log
+    //***************************
     if (KWIN.readConfig("logging", false)) {
       let logParts: [LogPartition, string[]][] = [];
       let newWindowSubmodules: string[] = [];
@@ -346,7 +368,7 @@ class KWinConfig implements IConfig {
       if (KWIN.readConfig("logWorkspaceSignals", false)) {
         let workspaceSignalsSubmodules = separate(
           KWIN.readConfig("logWorkspaceSignalsSubmodules", ""),
-          ","
+          ",",
         );
         logParts.push([
           LogPartitions.workspaceSignals,
@@ -356,14 +378,14 @@ class KWinConfig implements IConfig {
       if (KWIN.readConfig("logWindowSignals", false)) {
         let windowSignalsSubmodules = separate(
           KWIN.readConfig("logWindowSignalsSubmodules", ""),
-          ","
+          ",",
         );
         logParts.push([LogPartitions.windowSignals, windowSignalsSubmodules]);
       }
       if (KWIN.readConfig("logOther", false)) {
         let otherSubmodules = separate(
           KWIN.readConfig("logOtherSubmodules", ""),
-          ","
+          ",",
         );
         logParts.push([LogPartitions.other, otherSubmodules]);
       }
@@ -372,13 +394,13 @@ class KWinConfig implements IConfig {
         : [];
       LOG = new Logging(logParts, logFilters);
     } else LOG = undefined;
-    /***************************
-     ***************************
-     **************************/
+    //***************************
+    //***************************
+    //***************************
   }
 
   private static getSortedLayouts(
-    layoutsList: [ILayoutClass, boolean][]
+    layoutsList: [ILayoutClass, boolean][],
   ): ISortedLayouts[] {
     let sortedLayouts: ISortedLayouts[] = [];
     for (const [idx, [layoutClass, isCapacity]] of layoutsList.entries()) {
@@ -386,12 +408,12 @@ class KWinConfig implements IConfig {
       let validatedOrder = validateNumber(
         KWIN.readConfig(orderConfigKey, idx + 1),
         0,
-        12
+        12,
       );
       if (validatedOrder instanceof Err) {
         validatedOrder = idx + 1;
         warning(
-          `kwinconfig: layout order for ${layoutClass.id} is invalid, using default value ${validatedOrder}`
+          `kwinconfig: layout order for ${layoutClass.id} is invalid, using default value ${validatedOrder}`,
         );
       }
       if (validatedOrder === 0) continue;
@@ -429,11 +451,11 @@ class KWinConfig implements IConfig {
         let capacity = validateNumber(
           KWIN.readConfig(capacityConfigKey, 99),
           0,
-          99
+          99,
         );
         if (capacity instanceof Err) {
           warning(
-            `kwinconfig: layout capacity for ${layoutClass.id} is invalid: ${capacity}`
+            `kwinconfig: layout capacity for ${layoutClass.id} is invalid: ${capacity}`,
           );
           layoutFactories[layoutClass.id] = () => new layoutClass(null);
         } else if (capacity === 0 || capacity > 98) {

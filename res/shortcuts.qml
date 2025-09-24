@@ -1,38 +1,16 @@
+/*
+    SPDX-FileCopyrightText: 2018 Eon S. Jeon <esjeon@hyunmu.am>
+    SPDX-FileCopyrightText: 2024 Vjatcheslav V. Kolchkov <akl334@protonmail.ch>
+
+    SPDX-License-Identifier: MIT
+*/
+
+
 import QtQuick;
 import org.kde.kwin;
 
 Item {
     id: dbus;
-    function getRaiseSurfaceCapacity(){
-        return raiseSurfaceCapacity;
-    }
-    ShortcutHandler {
-        id: raiseSurfaceCapacity;
-
-        name: "KrohnkiteRaiseSurfaceCapacity";
-        text: "Krohnkite: Raise Surface Capacity";
-        sequence: "";
-    }
-    function getLowerSurfaceCapacity(){
-        return lowerSurfaceCapacity;
-    }
-    ShortcutHandler {
-        id: lowerSurfaceCapacity;
-
-        name: "KrohnkiteLowerSurfaceCapacity";
-        text: "Krohnkite: Lower Surface Capacity";
-        sequence: "";
-    }
-    function getToggleDock() {
-        return toggleDock;
-    }
-    ShortcutHandler {
-        id: toggleDock;
-
-        name: "KrohnkitetoggleDock";
-        text: "Krohnkite: Toggle Dock";
-        sequence: "";
-    }
 
     function getFocusNext() {
         return focusNext;
@@ -44,6 +22,7 @@ Item {
         text: "Krohnkite: Focus Next";
         sequence: "Meta+.";
     }
+
     function getFocusPrev() {
         return focusPrev;
     }
@@ -54,6 +33,40 @@ Item {
         text: "Krohnkite: Focus Previous";
         sequence: "Meta+,";
     }
+
+    function getFocusLeft() {
+        return focusLeft;
+    }
+    ShortcutHandler {
+        id: focusLeft;
+
+        name: "KrohnkiteFocusLeft";
+        text: "Krohnkite: Focus Left";
+        sequence: "Meta+H";
+    }
+
+    function getFocusRight() {
+        return focusRight;
+    }
+    ShortcutHandler {
+        id: focusRight;
+
+        name: "KrohnkiteFocusRight";
+        text: "Krohnkite: Focus Right";
+        sequence: "Meta+L";
+    }
+
+    function getToggleDock() {
+        return toggleDock;
+    }
+    ShortcutHandler {
+        id: toggleDock;
+
+        name: "KrohnkitetoggleDock";
+        text: "Krohnkite: Toggle Dock";
+        sequence: "";
+    }
+
 
     function getFocusDown() {
         return focusDown;
@@ -74,26 +87,6 @@ Item {
         name: "KrohnkiteFocusUp";
         text: "Krohnkite: Focus Up";
         sequence: "Meta+K";
-    }
-    function getFocusLeft() {
-        return focusLeft;
-    }
-    ShortcutHandler {
-        id: focusLeft;
-
-        name: "KrohnkiteFocusLeft";
-        text: "Krohnkite: Focus Left";
-        sequence: "Meta+H";
-    }
-    function getFocusRight() {
-        return focusRight;
-    }
-    ShortcutHandler {
-        id: focusRight;
-
-        name: "KrohnkiteFocusRight";
-        text: "Krohnkite: Focus Right";
-        sequence: "Meta+L";
     }
     function getShiftDown() {
         return shiftDown;
@@ -264,6 +257,36 @@ Item {
         name: "KrohnkiteSetMaster";
         text: "Krohnkite: Set master";
         sequence: "Meta+Return";
+    }
+    function getRaiseSurfaceCapacity(){
+        return raiseSurfaceCapacity;
+    }
+    ShortcutHandler {
+        id: raiseSurfaceCapacity;
+
+        name: "KrohnkiteRaiseSurfaceCapacity";
+        text: "Krohnkite: Raise Surface Capacity";
+        sequence: "";
+    }
+    function getLowerSurfaceCapacity(){
+        return lowerSurfaceCapacity;
+    }
+    ShortcutHandler {
+        id: lowerSurfaceCapacity;
+
+        name: "KrohnkiteLowerSurfaceCapacity";
+        text: "Krohnkite: Lower Surface Capacity";
+        sequence: "";
+    }
+    function getKrohnkiteMeta(){
+        return krohnkiteMeta;
+    }
+    ShortcutHandler {
+        id: krohnkiteMeta;
+
+        name: "KrohnkiteMeta";
+        text: "Krohnkite: Meta Key";
+        sequence: "";
     }
     function getTileLayout() {
         return tileLayout;

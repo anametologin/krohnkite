@@ -226,6 +226,23 @@
         <default>true</default>
     </entry>
 
+    <entry name="metaConfig" type="String">
+	    <label>Case Insensitive. Redefining the default keybindings in Meta Mode (see the wiki for details)</label>
+      <default>RaiseSurfaceCapacity=ResetSurfaceCapacity&#xD;FocusDown=FocusNext</default>
+    </entry>
+    <entry name="metaTimeout" type="Int">
+        <label>Time Duration in milliseconds for Meta Mode</label>
+        <default>3000</default>
+    </entry>
+    <entry name="metaIsToggle" type="Bool">
+	    <label>Krohnkite Meta shorcut works as a switcher of the Meta Mode</label>
+        <default>false</default>
+    </entry>
+    <entry name="metaIsPushedTwice" type="Bool">
+	    <label>Push twice the meta shortcut to enable/disable the Meta Mode</label>
+        <default>false</default>
+    </entry>
+
     <entry name="newWindowPosition" type="Int">
         <label>The position every new window in the screen window array</label>
         <default>0</default>

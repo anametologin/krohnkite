@@ -17,8 +17,6 @@ var KWIN: KWin;
 class KWinDriver implements IDriverContext {
   public static backendName: string = "kwin";
 
-  // TODO: split context implementation
-  //#region implement properties of IDriverContext (except `setTimeout`)
   public get backend(): string {
     return KWinDriver.backendName;
   }
@@ -29,7 +27,7 @@ class KWinDriver implements IDriverContext {
         ? this.workspace.activeWindow.output
         : this.workspace.activeScreen,
       this.workspace.currentActivity,
-      this.workspace.currentDesktop
+      this.workspace.currentDesktop,
     );
   }
 
@@ -65,8 +63,8 @@ class KWinDriver implements IDriverContext {
         this._surfaceStore.getSurface(
           output,
           this.workspace.currentActivity,
-          this.workspace.currentDesktop
-        )
+          this.workspace.currentDesktop,
+        ),
       );
     });
     return currentSurfaces;
@@ -77,7 +75,9 @@ class KWinDriver implements IDriverContext {
     return workspacePos !== null ? [workspacePos.x, workspacePos.y] : null;
   }
 
-  //#endregion
+  public get isMetaMode(): boolean {
+    return this._isMetaMode.state;
+  }
 
   public workspace: Workspace;
   private shortcuts: IShortcuts;
@@ -86,6 +86,7 @@ class KWinDriver implements IDriverContext {
   private windowMap: WrapperMap<Window, WindowClass>;
   private entered: boolean;
   private _surfaceStore: KWinSurfaceStore;
+  private _isMetaMode: IKrohnkiteMeta;
 
   constructor(api: Api) {
     KWIN = api.kwin;
@@ -98,11 +99,16 @@ class KWinDriver implements IDriverContext {
       (client: Window) => KWinWindow.generateID(client),
       (client: Window) =>
         new WindowClass(
-          new KWinWindow(client, this.workspace, this._surfaceStore)
-        )
+          new KWinWindow(client, this.workspace, this._surfaceStore),
+        ),
     );
     this.entered = false;
     this._surfaceStore = new KWinSurfaceStore(this.workspace);
+    this._isMetaMode = {
+      state: false,
+      lastPushed: 0,
+      toggleMode: CONFIG.metaIsToggle,
+    };
   }
 
   /*
@@ -156,19 +162,54 @@ class KWinDriver implements IDriverContext {
     return null;
   }
 
-  //#region implement methods of IDriverContext`
   public setTimeout(func: () => void, timeout: number) {
     KWinSetTimeout(() => this.enter(func), timeout);
   }
 
   public showNotification(text: string) {
     if (CONFIG.notificationDuration > 0)
-      popupDialog.show(text, CONFIG.notificationDuration);
+      popupDialog.showNotification(text, CONFIG.notificationDuration);
   }
-  //#endregion
+
+  public metaPushed() {
+    if (CONFIG.metaIsToggle) {
+      this._isMetaMode.state = !this._isMetaMode.state;
+      this.showNotification(
+        `Meta toggled ${this._isMetaMode.state ? "on" : "off"}`,
+      );
+    } else if (CONFIG.metaIsPushedTwice) {
+      let pushedTime = new Date().getTime();
+      if (pushedTime - this._isMetaMode.lastPushed < CONFIG.metaTimeout - 200) {
+        this._isMetaMode.toggleMode = !this._isMetaMode.toggleMode;
+        this._isMetaMode.state = this._isMetaMode.toggleMode;
+        this.showNotification(
+          `Meta toggled ${this._isMetaMode.state ? "on" : "off"}`,
+        );
+      } else {
+        if (!this._isMetaMode.state) {
+          this._isMetaMode.state = true;
+          this.showNotification(`Meta on`);
+          this.setTimeout(() => {
+            if (!this._isMetaMode.toggleMode) {
+              this._isMetaMode.state = false;
+            }
+          }, CONFIG.metaTimeout);
+        }
+      }
+      this._isMetaMode.lastPushed = pushedTime;
+    } else {
+      if (!this._isMetaMode.state) {
+        this._isMetaMode.state = true;
+        this.showNotification(`Meta on`);
+        this.setTimeout(() => {
+          this._isMetaMode.state = false;
+        }, CONFIG.notificationDuration);
+      }
+    }
+  }
 
   public moveWindowsToScreen(
-    windowsToScreen: [output: Output, windows: WindowClass[]][]
+    windowsToScreen: [output: Output, windows: WindowClass[]][],
   ) {
     let clients: Window[] = [];
     windowsToScreen.forEach(([targetOutput, windows]) => {
@@ -203,14 +244,14 @@ class KWinDriver implements IDriverContext {
 
   private getNeighborOutput(
     direction: Direction,
-    source: Output
+    source: Output,
   ): Output | null {
     let retOutput = null;
     let intersection = 0;
     let sourceRect = toRect(source.geometry);
     function isOutputCandidate(
       targetRect: Rect,
-      coordinate: "x" | "y"
+      coordinate: "x" | "y",
     ): boolean {
       let currentIntersection = sourceRect.intersection(targetRect, coordinate);
       if (currentIntersection > intersection) {
@@ -258,11 +299,7 @@ class KWinDriver implements IDriverContext {
   private bindShortcut() {
     const callbackShortcut = (shortcut: Shortcut) => {
       return () => {
-        LOG?.send(
-          LogModules.shortcut,
-          `Shortcut pressed:`,
-          `${ShortcutStr(shortcut)}`
-        );
+        LOG?.send(LogModules.shortcut, `Shortcut pressed:`, `${shortcut}`);
         this.enter(() => this.control.onShortcut(this, shortcut));
       };
     };
@@ -352,11 +389,15 @@ class KWinDriver implements IDriverContext {
       .getLowerSurfaceCapacity()
       .activated.connect(callbackShortcut(Shortcut.LowerSurfaceCapacity));
 
+    this.shortcuts
+      .getKrohnkiteMeta()
+      .activated.connect(callbackShortcut(Shortcut.KrohnkiteMeta));
+
     const callbackShortcutLayout = (layoutClass: ILayoutClass) => {
       return () => {
         LOG?.send(LogModules.shortcut, "shortcut layout", `${layoutClass.id}`);
         this.enter(() =>
-          this.control.onShortcut(this, Shortcut.SetLayout, layoutClass.id)
+          this.control.onShortcut(this, Shortcut.SetLayout, layoutClass.id),
         );
       };
     };
@@ -396,14 +437,13 @@ class KWinDriver implements IDriverContext {
       .activated.connect(callbackShortcutLayout(BinaryTreeLayout));
   }
 
-  //#region Helper functions
   /**
    * Binds callback to the signal w/ extra fail-safe measures, like re-entry
    * prevention and auto-disconnect on termination.
    */
   private connect(
     signal: Signal<(...args: any[]) => void>,
-    handler: (..._: any[]) => void
+    handler: (..._: any[]) => void,
   ): () => void {
     const wrapper = (...args: any[]) => {
       /* HACK: `workspace` become undefined when the script is disabled. */
@@ -436,7 +476,6 @@ class KWinDriver implements IDriverContext {
       this.entered = false;
     }
   }
-  //#endregion
   //TODO: add signal Vdesktop.aboutToBeDestroyed
   //add signal workspace.activity.removed
   private bindEvents() {
@@ -456,10 +495,10 @@ class KWinDriver implements IDriverContext {
         LOG?.send(
           LogModules.currentActivityChanged,
           "eventFired",
-          `Activity ID:${activityId}`
+          `Activity ID:${activityId}`,
         );
         this.control.onCurrentActivityChanged(this);
-      }
+      },
     );
 
     this.connect(
@@ -468,10 +507,10 @@ class KWinDriver implements IDriverContext {
         LOG?.send(
           LogModules.currentDesktopChanged,
           "eventFired",
-          `Virtual Desktop. name:${virtualDesktop.name}, id:${virtualDesktop.id}`
+          `Virtual Desktop. name:${virtualDesktop.name}, id:${virtualDesktop.id}`,
         );
         this.control.onSurfaceUpdate(this);
-      }
+      },
     );
 
     this.connect(this.workspace.windowAdded, (client: Window) => {
@@ -480,7 +519,7 @@ class KWinDriver implements IDriverContext {
         LogModules.windowAdded,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       const window = this.addWindow(client);
       if (client.active && window !== null)
@@ -493,7 +532,7 @@ class KWinDriver implements IDriverContext {
         LogModules.windowActivated,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       const window = this.windowMap.get(client);
       if (client.active && window !== null)
@@ -506,7 +545,7 @@ class KWinDriver implements IDriverContext {
         LogModules.windowRemoved,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       const window = this.windowMap.get(client);
       if (window) {
@@ -530,12 +569,12 @@ class KWinDriver implements IDriverContext {
         `window: caption:${client.caption} internalID:${
           client.internalId
         }, activities: ${client.activities.join(",")}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       this.control.onWindowChanged(
         this,
         window,
-        "activity=" + client.activities.join(",")
+        "activity=" + client.activities.join(","),
       );
     });
 
@@ -544,7 +583,7 @@ class KWinDriver implements IDriverContext {
         LogModules.bufferGeometryChanged,
         "eventFired",
         `Window: caption:${client.caption} internalId:${client.internalId}, moving:${moving}, resizing:${resizing}, actualGeometry: ${window.actualGeometry}, commitGeometry:${window.geometry}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       if (moving) this.control.onWindowMove(window);
       else if (resizing) this.control.onWindowResize(this, window);
@@ -559,7 +598,7 @@ class KWinDriver implements IDriverContext {
         LogModules.desktopsChanged,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId}, desktops: ${client.desktops}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       this.control.onWindowChanged(this, window, "Window's desktop changed.");
     });
@@ -569,12 +608,12 @@ class KWinDriver implements IDriverContext {
         LogModules.fullScreenChanged,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId}, fullscreen: ${client.fullScreen}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       this.control.onWindowChanged(
         this,
         window,
-        "fullscreen=" + client.fullScreen
+        "fullscreen=" + client.fullScreen,
       );
     });
 
@@ -583,7 +622,7 @@ class KWinDriver implements IDriverContext {
         LogModules.interactiveMoveResizeStepped,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId},interactiveMoveResizeStepped:${geometry}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       if (client.resize) return;
       this.control.onWindowDragging(this, window, geometry);
@@ -594,7 +633,7 @@ class KWinDriver implements IDriverContext {
         LogModules.maximizedAboutToChange,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId},maximizedAboutToChange:${mode}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       // const maximized = mode === MaximizeMode.MaximizeFull;
       (window.window as KWinWindow).maximized = (mode as number) > 0;
@@ -606,7 +645,7 @@ class KWinDriver implements IDriverContext {
         LogModules.minimizedChanged,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId},minimized:${client.minimized}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       if (KWINCONFIG.preventMinimize) {
         client.minimized = false;
@@ -622,7 +661,7 @@ class KWinDriver implements IDriverContext {
         LogModules.moveResizedChanged,
         "eventFired",
         `Window: caption:${client.caption} internalId:${client.internalId}, moving:${moving}, resizing:${resizing}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       if (moving !== client.move) {
         moving = client.move;
@@ -644,12 +683,12 @@ class KWinDriver implements IDriverContext {
         LogModules.outputChanged,
         "eventFired",
         `window: caption:${client.caption} internalID:${client.internalId} output: ${client.output.name}`,
-        { winClass: [`${client.resourceClass}`] }
+        { winClass: [`${client.resourceClass}`] },
       );
       this.control.onWindowChanged(
         this,
         window,
-        "screen=" + client.output.name
+        "screen=" + client.output.name,
       );
     });
     if (CONFIG.floatSkipPager) {

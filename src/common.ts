@@ -31,64 +31,56 @@ let windowStateStr = (state: WindowState) => {
 };
 
 const Shortcut = {
-  FocusNext: 1,
-  FocusPrev: 2,
-  DWMLeft: 3,
-  DWMRight: 4,
+  FocusNext: "FocusNext",
+  FocusPrev: "FocusPrev",
+  DWMLeft: "DWMLeft",
+  DWMRight: "DWMRight",
 
-  // Left,
-  // Right,
-  // Up,
-  // Down,
+  FocusUp: "FocusUp",
+  FocusDown: "FocusDown",
+  FocusLeft: "FocusLeft",
+  FocusRight: "FocusRight",
 
-  /* Alternate HJKL bindings */
-  FocusUp: 5,
-  FocusDown: 6,
-  FocusLeft: 7,
-  FocusRight: 8,
+  ShiftLeft: "ShiftLeft",
+  ShiftRight: "ShiftRight",
+  ShiftUp: "ShiftUp",
+  ShiftDown: "ShiftDown",
 
-  ShiftLeft: 9,
-  ShiftRight: 10,
-  ShiftUp: 11,
-  ShiftDown: 12,
+  SwapUp: "SwapUp",
+  SwapDown: "SwapDown",
+  SwapLeft: "SwapLeft",
+  SwapRight: "SwapRight",
 
-  SwapUp: 13,
-  SwapDown: 14,
-  SwapLeft: 15,
-  SwapRight: 16,
+  GrowWidth: "GrowWidth",
+  GrowHeight: "GrowHeight",
+  ShrinkWidth: "ShrinkWidth",
+  ShrinkHeight: "ShrinkHeight",
 
-  GrowWidth: 17,
-  GrowHeight: 18,
-  ShrinkWidth: 19,
-  ShrinkHeight: 20,
+  Increase: "Increase",
+  Decrease: "Decrease",
+  ShiftIncrease: "ShiftIncrease", //NOTE: unused shortcut
+  ShiftDecrease: "ShiftDecrease", //NOTE: unused shortcut
 
-  Increase: 21,
-  Decrease: 22,
-  ShiftIncrease: 22,
-  ShiftDecrease: 23,
+  ToggleFloat: "ToggleFloat",
+  ToggleFloatAll: "ToggleFloatAll",
+  SetMaster: "SetMaster",
+  NextLayout: "NextLayout",
+  PreviousLayout: "PreviousLayout",
+  SetLayout: "SetLayout",
 
-  ToggleFloat: 24,
-  ToggleFloatAll: 25,
-  SetMaster: 26,
-  NextLayout: 27,
-  PreviousLayout: 28,
-  SetLayout: 29,
+  Rotate: "Rotate",
+  RotatePart: "RotatePart",
 
-  Rotate: 30,
-  RotatePart: 31,
+  ToggleDock: "ToggleDock",
 
-  ToggleDock: 32,
+  RaiseSurfaceCapacity: "RaiseSurfaceCapacity",
+  LowerSurfaceCapacity: "LowerSurfaceCapacity",
 
-  RaiseSurfaceCapacity: 33,
-  LowerSurfaceCapacity: 34,
+  KrohnkiteMeta: "KrohnkiteMeta",
+
+  ResetSurfaceCapacity: "ResetSurfaceCapacity",
 } as const;
 type Shortcut = (typeof Shortcut)[keyof typeof Shortcut];
-
-const ShortcutsKeys = Object.keys(Shortcut);
-
-let ShortcutStr = (shortcut: Shortcut) => {
-  return ShortcutsKeys[shortcut - 1];
-};
 
 interface IShortcuts {
   getToggleDock(): ShortcutHandler;
@@ -138,9 +130,9 @@ interface IShortcuts {
 
   getRaiseSurfaceCapacity(): ShortcutHandler;
   getLowerSurfaceCapacity(): ShortcutHandler;
-}
 
-//#region Driver
+  getKrohnkiteMeta(): ShortcutHandler;
+}
 
 interface IConfig {
   //Layouts
@@ -173,6 +165,10 @@ interface IConfig {
   adjustLayout: boolean;
   adjustLayoutLive: boolean;
   directionalKeyMode: "dwm" | "focus";
+  metaConfig: string[];
+  metaTimeout: number;
+  metaIsToggle: boolean;
+  metaIsPushedTwice: boolean;
   newWindowPosition: number;
 
   //Rules
@@ -240,6 +236,11 @@ interface IConfig {
 
   //log
 }
+interface IKrohnkiteMeta {
+  state: boolean;
+  lastPushed: number;
+  toggleMode: boolean;
+}
 
 interface IDriverWindow {
   readonly fullScreen: boolean;
@@ -264,7 +265,7 @@ interface ISurfaceStore {
   getSurface(
     output: Output,
     activity: string,
-    vDesktop: VirtualDesktop
+    vDesktop: VirtualDesktop,
   ): ISurface;
 }
 
@@ -289,11 +290,13 @@ interface IDriverContext {
 
   currentSurface: ISurface;
   currentWindow: WindowClass | null;
+  isMetaMode: boolean;
 
   setTimeout(func: () => void, timeout: number): void;
   showNotification(text: string): void;
   moveWindowsToScreen(windowsToScreen: [Output, WindowClass[]][]): void;
   moveToScreen(window: WindowClass, direction: Direction): void;
+  metaPushed(): void;
 }
 
 interface ILayoutClass {
@@ -312,20 +315,20 @@ interface ILayout {
     tiles: WindowClass[],
     basis: WindowClass,
     delta: RectDelta,
-    gap: number
+    gap: number,
   ): void;
   apply(
     ctx: EngineContext,
     tileables: WindowClass[],
     area: Rect,
-    gap: number
+    gap: number,
   ): void;
   handleShortcut?(ctx: EngineContext, input: Shortcut, data?: any): boolean;
   drag?(
     ctx: EngineContext,
     draggingRect: Rect,
     window: WindowClass,
-    workingArea: Rect
+    workingArea: Rect,
   ): boolean;
 
   toString(): string;
@@ -432,7 +435,7 @@ interface ILogModules {
     module?: LogModule,
     action?: string,
     message?: string,
-    filters?: ILogFilters
+    filters?: ILogFilters,
   ): void;
   print(module?: LogModule, action?: string, message?: string): void;
   isModuleOn(module: LogModule): boolean;

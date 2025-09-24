@@ -729,6 +729,9 @@ class TilingEngine {
     }
     return currentSurface.capacity;
   }
+  public ResetSurfaceCapacity(ctx: IDriverContext): number | null {
+    return (ctx.currentSurface.capacity = null);
+  }
 
   /**
    * Toggle float mode of window.
