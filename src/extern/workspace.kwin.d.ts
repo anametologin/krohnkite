@@ -5,7 +5,7 @@
 */
 
 interface Workspace {
-  readonly desktops: Output[];
+  readonly desktops: VirtualDesktop[];
   readonly desktopGridSize: QSize;
   readonly desktopGridWidth: number;
   readonly desktopGridHeight: number;
@@ -113,7 +113,7 @@ interface Workspace {
   clientArea(
     option: ClientAreaOption,
     output: Output,
-    desktop: VirtualDesktop
+    desktop: VirtualDesktop,
   ): QRect;
   clientArea(option: ClientAreaOption, window: Window): QRect;
   createDesktop(position: number, name: string): void;

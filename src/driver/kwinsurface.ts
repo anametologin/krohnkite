@@ -11,18 +11,41 @@ interface ISurfaceCfg {
 class KWinSurfaceStore implements ISurfaceStore {
   private _store: { [id: string]: ISurface };
   private _userSurfacesCfg: SurfaceCfg<ISurfaceCfg>[];
+  private _vDesktopsIds: Set<string>;
   private workspace: Workspace;
 
   constructor(workspace: Workspace) {
     this._store = {};
     this._userSurfacesCfg = KWinSurfaceStore.getSurfacesUserCfg();
     this.workspace = workspace;
+    this._vDesktopsIds = new Set<string>();
+  }
+
+  public checkVirtualDesktops() {
+    let desktops = new Set<string>();
+    this.workspace.desktops.forEach((desktop) => {
+      desktops.add(desktop.id);
+    });
+    let removeIds = [...this._vDesktopsIds].filter((x) => !desktops.has(x));
+    for (let id of removeIds) {
+      LOG?.send(
+        LogModules.surfaceChanged,
+        "checkVirtualDesktops",
+        `The Virtual Desktop with id:${id} was deleted.`,
+      );
+      this._removeById(id, "vDesktopId");
+      this._vDesktopsIds.delete(id);
+    }
+  }
+
+  public removeByActivity(id: string) {
+    this._removeById(id, "activityId");
   }
 
   public getSurface(
     output: Output,
     activity: string,
-    vDesktop: VirtualDesktop
+    vDesktop: VirtualDesktop,
   ): ISurface {
     const id = KWinSurface.generateId(output, activity, vDesktop);
     if (!(id in this._store)) {
@@ -32,8 +55,10 @@ class KWinSurfaceStore implements ISurfaceStore {
         activity,
         vDesktop,
         this.workspace,
-        surfaceCfg
+        surfaceCfg,
       );
+      this._vDesktopsIds.has(vDesktop.id) ||
+        this._vDesktopsIds.add(vDesktop.id);
     } else if (this._store[id].output?.name === undefined) {
       this._store[id].output = output;
     }
@@ -42,13 +67,31 @@ class KWinSurfaceStore implements ISurfaceStore {
   private _surfaceCfg(
     output: Output,
     activity: string,
-    vDesktop: VirtualDesktop
+    vDesktop: VirtualDesktop,
   ): ISurfaceCfg | null {
     for (let i = 0; i < this._userSurfacesCfg.length; i++) {
       let userCfg = this._userSurfacesCfg[i];
       if (userCfg.isFit(output, activity, vDesktop)) return userCfg.cfg;
     }
     return null;
+  }
+  private _removeById(sourceId: string, byType: "vDesktopId" | "activityId") {
+    let removeIds: string[] = [];
+    for (let id of Object.keys(this._store)) {
+      if (
+        (byType === "vDesktopId" && this._store[id].vDesktop.id === sourceId) ||
+        (byType === "activityId" && this._store[id].activity === sourceId)
+      )
+        removeIds.push(id);
+    }
+    LOG?.send(
+      LogModules.surfaceChanged,
+      "removeById",
+      `remove from surface store by ${byType} next surfaces: ${removeIds.map((id) => this._store[id].toString()).join("#")}`,
+    );
+    removeIds.forEach((id) => {
+      delete this._store[id];
+    });
   }
   private static getSurfacesUserCfg(): SurfaceCfg<ISurfaceCfg>[] {
     let userCfg: SurfaceCfg<ISurfaceCfg>[] = [];
@@ -59,8 +102,8 @@ class KWinSurfaceStore implements ISurfaceStore {
           srf.outputName,
           srf.activityId,
           srf.vDesktopName,
-          validatedCfg
-        )
+          validatedCfg,
+        ),
       );
     });
 
@@ -85,8 +128,8 @@ class KWinSurfaceStore implements ISurfaceStore {
       if (cfgFields.indexOf(userCfgField) < 0) {
         errors.push(
           `"${userCfgField}" has unknown parameter. Possible parameters: ${cfgFields.join(
-            ","
-          )}`
+            ",",
+          )}`,
         );
         return;
       }
@@ -101,8 +144,8 @@ class KWinSurfaceStore implements ISurfaceStore {
         default:
           errors.push(
             `"${part}" has unknown parameter. Possible parameters: ${cfgFields.join(
-              ","
-            )}`
+              ",",
+            )}`,
           );
           return;
       }
@@ -130,7 +173,7 @@ class KWinSurface implements ISurface {
     output: Output,
     activity: string,
     vDesktop: VirtualDesktop,
-    isLayoutId: boolean = false
+    isLayoutId: boolean = false,
   ): string {
     let path = output.name;
     if (isLayoutId) {
@@ -147,7 +190,7 @@ class KWinSurface implements ISurface {
     const area = this._workspace.clientArea(
       ClientAreaOption.PlacementArea,
       this.output,
-      this.vDesktop
+      this.vDesktop,
     );
 
     return toRect(area);
@@ -177,7 +220,7 @@ class KWinSurface implements ISurface {
     activity: string,
     vDesktop: VirtualDesktop,
     workspace: Workspace,
-    surfaceConfig: ISurfaceCfg | null
+    surfaceConfig: ISurfaceCfg | null,
   ) {
     this.id = KWinSurface.generateId(output, activity, vDesktop);
     this.layoutId = KWinSurface.generateId(output, activity, vDesktop, true);

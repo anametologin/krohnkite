@@ -553,6 +553,22 @@ class KWinDriver implements IDriverContext {
         this.windowMap.remove(client);
       }
     });
+    this.connect(this.workspace.activityRemoved, (id: string) => {
+      LOG?.send(
+        LogModules.surfaceChanged,
+        "eventFired",
+        `Activity: id: ${id} has been removed.`,
+      );
+      this._surfaceStore.removeByActivity(id);
+    });
+    this.connect(this.workspace.desktopsChanged, () => {
+      LOG?.send(
+        LogModules.surfaceChanged,
+        "eventFired",
+        `Virtual Desktops Changed`,
+      );
+      this._surfaceStore.checkVirtualDesktops();
+    });
 
     // TODO: options.configChanged.connect(this.onConfigChanged);
     /* NOTE: How disappointing. This doesn't work at all. Even an official kwin script tries this.

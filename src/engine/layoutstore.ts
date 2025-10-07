@@ -15,11 +15,16 @@ class LayoutStoreEntry {
   private layouts: { [key: string]: ILayout };
   private previousID: string;
 
-  constructor(outputName: string, desktopName?: string, activity?: string) {
+  constructor(
+    outputName: string,
+    desktopName?: string,
+    activity?: string,
+    desktopId?: string,
+  ) {
     let layouts = CONFIG.layoutOrder.map((layout) => layout.toLowerCase());
     let layouts_str = layouts.map((layout, i) => i + "." + layout + " ");
     print(
-      `Krohnkite: Screen(output):${outputName}, Desktop(name):${desktopName}, Activity: ${activity}, layouts: ${layouts_str}`
+      `Krohnkite: Screen(output):${outputName}, Desktop(name):${desktopName}(id):${desktopId}, Activity: ${activity}, layouts: ${layouts_str}`,
     );
     this.currentIndex = 0;
     this.currentID = CONFIG.layoutOrder[0];
@@ -142,7 +147,7 @@ class LayoutStore {
       let key_without_activity = KWinSurface.generateId(
         srf.output,
         "",
-        srf.vDesktop
+        srf.vDesktop,
       );
       if (this.store[key_without_activity]) {
         this.store[srf.layoutId] = this.store[key_without_activity];
@@ -151,7 +156,8 @@ class LayoutStore {
         this.store[srf.layoutId] = new LayoutStoreEntry(
           srf.output.name,
           srf.vDesktop.name,
-          srf.activity
+          srf.activity,
+          srf.vDesktop.id,
         );
       }
     }

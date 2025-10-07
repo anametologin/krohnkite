@@ -20,7 +20,7 @@ class Logging implements ILogModules {
     module?: LogModule,
     action?: string,
     message?: string,
-    filter?: ILogFilters
+    filter?: ILogFilters,
   ) {
     if (module !== undefined && !this.isModuleOn(module)) return;
     if (filter !== undefined) {
@@ -41,7 +41,7 @@ class Logging implements ILogModules {
       if (this._filters[key] == null || filter[key] == null) continue;
       const isContain = KWinWindow.isContain(
         this._filters[key] as string[],
-        (filter[key] as string[])[0]
+        (filter[key] as string[])[0],
       );
       if (this._isIncludeMode) {
         return isContain ? false : true;
@@ -56,7 +56,6 @@ class Logging implements ILogModules {
     for (const module of modules) {
       const userModules = Logging._logParseUserModules(module[0], module[1]);
       if (userModules !== null) {
-        userModules.forEach((el) => {});
         logModules = new Set([...logModules, ...userModules]);
       }
     }
@@ -75,7 +74,7 @@ class Logging implements ILogModules {
       const filterParts = filter.split("=");
       if (filterParts.length !== 2) {
         warning(
-          `Invalid Log filter: ${filter}.Every filter have contain "=" equal sign`
+          `Invalid Log filter: ${filter}.Every filter have contain "=" equal sign`,
         );
         continue;
       }
@@ -89,22 +88,19 @@ class Logging implements ILogModules {
     return logFilters;
   }
 
-  private static _getLogModulesStr(module: LogModule): string {
-    return LogModulesKeys[module - 1];
-  }
   private _print(module?: LogModule, action?: string, message?: string) {
     const timestamp = (new Date().getTime() - this._started) / 1000;
     print(
       `Krohnkite.log [${timestamp}], ${
-        module !== undefined ? `[${Logging._getLogModulesStr(module)}]` : ""
+        module !== undefined ? `[${module}]` : ""
       } ${action !== undefined ? action : ""} ${
         message !== undefined ? message : ""
-      }`
+      }`,
     );
   }
   private static _logParseUserModules(
     logPartition: LogPartition,
-    userStr: string[]
+    userStr: string[],
   ): Set<LogModule> | null {
     let submodules: Set<LogModule>;
     let includeMode = true;
@@ -124,7 +120,7 @@ class Logging implements ILogModules {
         const range = moduleStr.split("-");
         if (range.length !== 2) {
           warning(
-            `Invalid module range:${range} in ${moduleStr}, ignoring module ${logPartition.name} `
+            `Invalid module range:${range} in ${moduleStr}, ignoring module ${logPartition.name} `,
           );
           return null;
         }
@@ -138,19 +134,19 @@ class Logging implements ILogModules {
         if (start instanceof Err || end instanceof Err) {
           let err = start instanceof Err ? start : end;
           warning(
-            `Invalid module number: ${err} in ${moduleStr}, ignoring module ${logPartition.name}`
+            `Invalid module number: ${err} in ${moduleStr}, ignoring module ${logPartition.name}`,
           );
           return null;
         }
         if (start > end || start < 1) {
           warning(
-            `Invalid module range:${range}. The start must be less than end and both must be greater than zero. Module string: ${moduleStr}, ignoring module ${logPartition.name} `
+            `Invalid module range:${range}. The start must be less than end and both must be greater than zero. Module string: ${moduleStr}, ignoring module ${logPartition.name} `,
           );
           return null;
         }
         if (end > logPartition.modules.length) {
           warning(
-            `Invalid module range:${range}. The end must be less than or equal to the number of submodules:${logPartition.modules.length} in the module. Module string: ${moduleStr}, ignoring module ${logPartition.name} `
+            `Invalid module range:${range}. The end must be less than or equal to the number of submodules:${logPartition.modules.length} in the module. Module string: ${moduleStr}, ignoring module ${logPartition.name} `,
           );
           return null;
         }
@@ -167,13 +163,13 @@ class Logging implements ILogModules {
         let moduleNumber: number | Err = validateNumber(moduleStr);
         if (moduleNumber instanceof Err) {
           warning(
-            `Invalid module number:${moduleNumber}. The module number must be a number. Module string: ${moduleStr}, ignoring module ${logPartition.name} `
+            `Invalid module number:${moduleNumber}. The module number must be a number. Module string: ${moduleStr}, ignoring module ${logPartition.name} `,
           );
           return null;
         }
         if (moduleNumber < 1 || moduleNumber > logPartition.modules.length) {
           warning(
-            `Invalid module number:${moduleNumber}. The module number must be >=1 and <= number of submodules:${logPartition.modules.length}. Module string: ${moduleStr}, ignoring module ${logPartition.name} `
+            `Invalid module number:${moduleNumber}. The module number must be >=1 and <= number of submodules:${logPartition.modules.length}. Module string: ${moduleStr}, ignoring module ${logPartition.name} `,
           );
           return null;
         }

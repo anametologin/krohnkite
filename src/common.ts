@@ -236,6 +236,7 @@ interface IConfig {
 
   //log
 }
+
 interface IKrohnkiteMeta {
   state: boolean;
   lastPushed: number;
@@ -349,34 +350,35 @@ interface ISize {
 
 // Logging
 const LogModules = {
-  newWindowAdded: 1,
-  newWindowFiltered: 2,
-  newWindowUnmanaged: 3,
-  screensChanged: 4,
-  virtualScreenGeometryChanged: 5,
-  currentActivityChanged: 6,
-  currentDesktopChanged: 7,
-  windowAdded: 8,
-  windowActivated: 9,
-  windowRemoved: 10,
-  activitiesChanged: 11,
-  bufferGeometryChanged: 12,
-  desktopsChanged: 13,
-  fullScreenChanged: 14,
-  interactiveMoveResizeStepped: 15,
-  maximizedAboutToChange: 16,
-  minimizedChanged: 17,
-  moveResizedChanged: 18,
-  outputChanged: 19,
-  shortcut: 20,
-  arrangeScreen: 21,
-  printConfig: 22,
-  setTimeout: 23,
-  window: 24,
+  newWindowAdded: "newWindowAdded",
+  newWindowFiltered: "newWindowFiltered",
+  newWindowUnmanaged: "newWindowUnmanaged",
+
+  screensChanged: "screensChanged",
+  virtualScreenGeometryChanged: "virtualScreenGeometryChanged",
+  currentActivityChanged: "currentActivityChanged",
+  currentDesktopChanged: "currentDesktopChanged",
+  windowAdded: "windowAdded",
+  windowActivated: "windowActivated",
+  windowRemoved: "windowRemoved",
+  surfaceChanged: "surfaceChanged",
+
+  activitiesChanged: "activitiesChanged",
+  bufferGeometryChanged: "bufferGeometryChanged",
+  desktopsChanged: "desktopsChanged",
+  fullScreenChanged: "fullScreenChanged",
+  interactiveMoveResizeStepped: "interactiveMoveResizeStepped",
+  maximizedAboutToChange: "maximizedAboutToChange",
+  minimizedChanged: "minimizedChanged",
+  moveResizedChanged: "moveResizedChanged",
+  outputChanged: "outputChanged",
+  shortcut: "shortcut",
+  arrangeScreen: "arrangeScreen",
+  printConfig: "printConfig",
+  setTimeout: "setTimeout",
+  window: "window",
 };
 type LogModule = (typeof LogModules)[keyof typeof LogModules];
-
-const LogModulesKeys = Object.keys(LogModules);
 
 const LogPartitions = {
   newWindow: {
@@ -399,6 +401,7 @@ const LogPartitions = {
       LogModules.windowAdded,
       LogModules.windowActivated,
       LogModules.windowRemoved,
+      LogModules.surfaceChanged,
     ],
   },
   windowSignals: {
