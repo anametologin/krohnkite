@@ -441,6 +441,10 @@
         <default>false</default>
     </entry>
 
+    <entry name="floatEnable" type="Bool">
+      <label>Will Krohnkite control the float windows initial size</label>
+        <default>true</default>
+    </entry>
     <entry name="floatInitWindowWidth" type="Int">
 	    <label>The initial width of a floating window in percent of the screen width.</label>
         <default>50</default>

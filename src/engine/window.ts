@@ -162,7 +162,10 @@ class WindowClass {
 
     this.internalState = WindowState.Unmanaged;
     this.shouldCommitFloat = this.shouldFloat;
-    this._floatGeometry = this.shouldCommitFloat ? this.geometry : null;
+    this._floatGeometry =
+      this.shouldCommitFloat || CONFIG.floatInit === null
+        ? this.geometry
+        : null;
     this.weightMap = {};
     this.dock = null;
 

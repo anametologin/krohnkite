@@ -252,9 +252,12 @@ class KWinWindow implements IDriverWindow {
 
   public getInitFloatGeometry(): Rect {
     let outputGeometry = this.window.output.geometry;
+    if (CONFIG.floatInit === null) {
+      return toRect(outputGeometry);
+    }
     let width, height, x, y: number;
-    width = outputGeometry.width * (CONFIG.floatInitWindowWidth / 100);
-    height = outputGeometry.height * (CONFIG.floatInitWindowHeight / 100);
+    width = outputGeometry.width * (CONFIG.floatInit.windowWidth / 100);
+    height = outputGeometry.height * (CONFIG.floatInit.windowHeight / 100);
     x = outputGeometry.x + outputGeometry.width / 2 - width / 2;
     y = outputGeometry.y + outputGeometry.height / 2 - height / 2;
     if (
@@ -275,17 +278,17 @@ class KWinWindow implements IDriverWindow {
       x = outputGeometry.x + outputGeometry.width / 2 - width / 2;
       y = outputGeometry.y + outputGeometry.height / 2 - height / 2;
     } else {
-      if (CONFIG.floatRandomize) {
+      if (CONFIG.floatInit.randomize) {
         x =
           x +
           getRandomInt(
-            (x - outputGeometry.x) * (CONFIG.floatRandomWidth / 100),
+            (x - outputGeometry.x) * (CONFIG.floatInit.randomWidth / 100),
             true,
           );
         y =
           y +
           getRandomInt(
-            (y - outputGeometry.y) * (CONFIG.floatRandomHeight / 100),
+            (y - outputGeometry.y) * (CONFIG.floatInit.randomHeight / 100),
             true,
           );
       }

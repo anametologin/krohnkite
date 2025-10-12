@@ -210,16 +210,12 @@ interface IConfig {
   tiledWindowsLayer: WindowLayer;
   floatedWindowsLayer: WindowLayer;
 
+  floatInit: IFloatInit | null;
+
   soleWindowWidth: number;
   soleWindowHeight: number;
   soleWindowNoBorders: boolean;
   soleWindowNoGaps: boolean;
-
-  floatInitWindowWidth: number;
-  floatInitWindowHeight: number;
-  floatRandomize: boolean;
-  floatRandomWidth: number;
-  floatRandomHeight: number;
 
   unfitGreater: boolean;
   unfitLess: boolean;
@@ -446,6 +442,14 @@ interface ILogModules {
 
 interface ILogFilters {
   winClass?: string[] | null;
+}
+
+interface IFloatInit {
+  windowWidth: number;
+  windowHeight: number;
+  randomize: boolean;
+  randomWidth: number;
+  randomHeight: number;
 }
 
 // Globals

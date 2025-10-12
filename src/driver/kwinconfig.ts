@@ -100,11 +100,7 @@ class KWinConfig implements IConfig {
   public soleWindowNoBorders: boolean;
   public soleWindowNoGaps: boolean;
 
-  floatInitWindowWidth: number;
-  floatInitWindowHeight: number;
-  floatRandomize: boolean;
-  floatRandomWidth: number;
-  floatRandomHeight: number;
+  floatInit: IFloatInit | null;
 
   public unfitGreater: boolean;
   public unfitLess: boolean;
@@ -304,35 +300,44 @@ class KWinConfig implements IConfig {
     this.soleWindowNoBorders = KWIN.readConfig("soleWindowNoBorders", false);
     this.soleWindowNoGaps = KWIN.readConfig("soleWindowNoGaps", false);
 
-    this.floatInitWindowWidth = validateNumberWithDefault(
-      KWIN.readConfig("floatInitWindowWidth", 50),
-      50,
-      "floatInitWindowWidth",
-      1,
-      100,
-    );
-    this.floatInitWindowHeight = validateNumberWithDefault(
-      KWIN.readConfig("floatInitWindowHeight", 50),
-      50,
-      "floatInitWindowHeight",
-      1,
-      100,
-    );
-    this.floatRandomize = KWIN.readConfig("floatRandomize", true);
-    this.floatRandomWidth = validateNumberWithDefault(
-      KWIN.readConfig("floatRandomWidth", 15),
-      15,
-      "floatRandomWidth",
-      1,
-      100,
-    );
-    this.floatRandomHeight = validateNumberWithDefault(
-      KWIN.readConfig("floatRandomHeight", 15),
-      15,
-      "floatRandomHeight",
-      1,
-      100,
-    );
+    if (KWIN.readConfig("floatEnable", true)) {
+      let windowWidth = validateNumberWithDefault(
+        KWIN.readConfig("floatInitWindowWidth", 50),
+        50,
+        "floatInitWindowWidth",
+        1,
+        100,
+      );
+      let windowHeight = validateNumberWithDefault(
+        KWIN.readConfig("floatInitWindowHeight", 50),
+        50,
+        "floatInitWindowHeight",
+        1,
+        100,
+      );
+      let randomize = KWIN.readConfig("floatRandomize", true);
+      let randomWidth = validateNumberWithDefault(
+        KWIN.readConfig("floatRandomWidth", 15),
+        15,
+        "floatRandomWidth",
+        1,
+        100,
+      );
+      let randomHeight = validateNumberWithDefault(
+        KWIN.readConfig("floatRandomHeight", 15),
+        15,
+        "floatRandomHeight",
+        1,
+        100,
+      );
+      this.floatInit = {
+        windowHeight,
+        windowWidth,
+        randomHeight,
+        randomWidth,
+        randomize,
+      };
+    } else this.floatInit = null;
 
     this.unfitGreater = KWIN.readConfig("unfitGreater", true);
     this.unfitLess = KWIN.readConfig("unfitLess", true);
