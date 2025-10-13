@@ -6,6 +6,8 @@
 */
 
 type percentType = number;
+type Direction = "up" | "down" | "left" | "right";
+type Position = "left" | "middle" | "right" | "upper" | "bottom" | "single";
 
 const WindowState = {
   /* initial value */
@@ -292,7 +294,8 @@ interface IDriverContext {
   setTimeout(func: () => void, timeout: number): void;
   showNotification(text: string): void;
   moveWindowsToScreen(windowsToScreen: [Output, WindowClass[]][]): void;
-  moveToScreen(window: WindowClass, direction: Direction): void;
+  moveToScreen(window: WindowClass, direction: Direction): boolean;
+  moveToVDesktop(window: WindowClass, direction: Direction): boolean;
   metaPushed(): void;
 }
 

@@ -5,7 +5,6 @@
     SPDX-License-Identifier: MIT
 */
 
-type Direction = "up" | "down" | "left" | "right";
 type ScreenData = {
   visibles: WindowClass[];
   tileables: WindowClass[];
@@ -620,36 +619,20 @@ class TilingEngine {
   /**
    * Swap the position of the current window with a neighbor at the given direction.
    */
-  public swapDirection(ctx: IDriverContext, dir: Direction): boolean {
-    const window = ctx.currentWindow;
-    if (window === null) {
-      /* if no current window, select the first tile. */
-      const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
-      if (tiles.length > 1) ctx.currentWindow = tiles[0];
-      return false;
-    }
-
-    const neighbor = this.getNeighborByDirection(ctx, window, dir);
+  public swapDirection(
+    ctx: IDriverContext,
+    direction: Direction,
+    window: WindowClass,
+  ): boolean {
+    const neighbor = this.getNeighborByDirection(ctx, window, direction);
     if (neighbor) {
       this.windows.swap(window, neighbor);
-    } else {
-      switch (dir) {
-        case "up":
-          ctx.moveToScreen(window, "up");
-          break;
-        case "down":
-          ctx.moveToScreen(window, "down");
-          break;
-        case "left":
-          ctx.moveToScreen(window, "left");
-          break;
-        case "right":
-          ctx.moveToScreen(window, "right");
-          break;
-      }
-      return false;
+      return true;
     }
-    return true;
+    if (ctx.moveToScreen(window, direction)) {
+      return false; // the screens already arranged
+    }
+    return ctx.moveToVDesktop(window, direction);
   }
 
   /**
@@ -689,12 +672,17 @@ class TilingEngine {
 
   public swapDirOrMoveFloat(ctx: IDriverContext, dir: Direction): boolean {
     const window = ctx.currentWindow;
-    if (!window) return false;
+    if (window === null) {
+      /* if no current window, select the first tile. */
+      const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
+      if (tiles.length > 0) ctx.currentWindow = tiles[0];
+      return false;
+    }
 
     const state = window.state;
     if (WindowClass.isFloatingState(state)) this.moveFloat(window, dir);
     else if (WindowClass.isTiledState(state)) {
-      return this.swapDirection(ctx, dir);
+      return this.swapDirection(ctx, dir, window);
     }
     return true;
   }

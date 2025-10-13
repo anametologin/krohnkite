@@ -219,20 +219,22 @@ class KWinDriver implements IDriverContext {
         client.minimized = true;
         this.workspace.sendClientToScreen(client, targetOutput);
       });
-      this.setTimeout(() => {
-        clients.forEach((client) => {
-          client.minimized = false;
-        });
-        this.control.engine.arrange(this, "moveWindowsToScreen");
-      }, 100);
     });
+    if (clients.length === 0) return;
+    this.setTimeout(() => {
+      clients.forEach((client) => {
+        client.minimized = false;
+      });
+      this.workspace.activeWindow = clients[clients.length - 1];
+      this.control.engine.arrange(this, "moveWindowsToScreen");
+    }, 100);
   }
 
-  public moveToScreen(window: WindowClass, direction: Direction) {
+  public moveToScreen(window: WindowClass, direction: Direction): boolean {
     let client = (window.window as KWinWindow).window;
     let output = client.output;
     let neighbor = this.getNeighborOutput(direction, output);
-    if (neighbor === null || neighbor === undefined) return;
+    if (neighbor === null || neighbor === undefined) return false;
     client.minimized = true;
     this.workspace.sendClientToScreen(client, neighbor);
     this.setTimeout(() => {
@@ -240,6 +242,7 @@ class KWinDriver implements IDriverContext {
       this.workspace.activeWindow = client;
       this.control.engine.arrange(this, "moveToScreen");
     }, 100);
+    return true;
   }
 
   private getNeighborOutput(
@@ -294,6 +297,119 @@ class KWinDriver implements IDriverContext {
       }
     }
     return retOutput;
+  }
+
+  public moveToVDesktop(
+    window: WindowClass,
+    direction: Direction,
+    across = true,
+  ): boolean {
+    let targetVDesktop = this.getNeighborVirtualDesktop(direction);
+    if (targetVDesktop === null) return false;
+    let client = (window.window as KWinWindow).window;
+    this.workspace.currentDesktop = targetVDesktop;
+    client.desktops = [targetVDesktop];
+    this.workspace.activeWindow = client;
+    if (across) {
+      let oppositeDirection: Direction;
+      let currentOutput = this.workspace.activeScreen;
+      let sourceOutput = currentOutput;
+      let targetOutput: Output | null;
+      switch (direction) {
+        case "right":
+          oppositeDirection = "left";
+          break;
+        case "left":
+          oppositeDirection = "right";
+          break;
+        case "up":
+          oppositeDirection = "down";
+          break;
+        case "down":
+          oppositeDirection = "up";
+          break;
+        default:
+          return false;
+      }
+
+      while (
+        (targetOutput = this.getNeighborOutput(
+          oppositeDirection,
+          sourceOutput,
+        )) !== null
+      ) {
+        sourceOutput = targetOutput;
+      }
+      if (sourceOutput !== currentOutput) {
+        this.moveWindowsToScreen([[sourceOutput, [window]]]);
+        return false; // moveWindowsToScreen arrange screens
+      }
+    }
+    return true;
+  }
+
+  private getNeighborVirtualDesktop(
+    direction: Direction,
+  ): VirtualDesktop | null {
+    let currentVDesktop = this.workspace.currentDesktop;
+    let vDesktops = this.workspace.desktops;
+    let netSize = this.workspace.desktopGridSize;
+    function getVDesktopPosition(idx: number): Position {
+      idx++;
+      switch (direction) {
+        case "left":
+        case "right": {
+          if (
+            netSize.width === 1 ||
+            (idx === vDesktops.length && idx % netSize.width === 1)
+          )
+            return "single";
+          if (idx === vDesktops.length) return "right";
+          let pos_number = idx % netSize.width;
+          if (pos_number === 0) {
+            return "right";
+          } else if (pos_number === 1) {
+            return "left";
+          } else return "middle";
+        }
+        case "up":
+        case "down": {
+          if (netSize.height === 1) return "single";
+          if (idx + netSize.width > vDesktops.length) return "bottom";
+          let floor =
+            Math.floor(idx / netSize.height) +
+            Number(Boolean(idx / netSize.height));
+          if (floor === 1) {
+            return "upper";
+          } else if (floor === netSize.height) return "bottom";
+          else return "middle";
+        }
+      }
+    }
+    for (let i = 0; i < vDesktops.length; i++) {
+      let vDesktop = vDesktops[i];
+      if (vDesktop !== currentVDesktop) continue;
+      let position = getVDesktopPosition(i);
+      switch (direction) {
+        case "left": {
+          if (position === "left" || position === "single") return null;
+          else return vDesktops[i - 1];
+        }
+        case "right": {
+          if (position === "right" || position === "single") return null;
+          else return vDesktops[i + 1];
+        }
+        case "up": {
+          if (position === "upper" || position === "single") return null;
+          else return vDesktops[i - netSize.width];
+        }
+        case "down": {
+          if (position === "bottom" || position === "single") return null;
+          else return vDesktops[i + netSize.width];
+        }
+      }
+    }
+    return null;
   }
 
   private bindShortcut() {
