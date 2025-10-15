@@ -593,12 +593,21 @@ class TilingEngine {
     /* if no current window, select the first tile. */
     if (window === null) {
       const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
-      if (tiles.length > 1) ctx.currentWindow = tiles[0];
-      return;
+      if (tiles.length > 0) {
+        ctx.currentWindow = tiles[0];
+        return;
+      }
     }
 
-    const neighbor = this.getNeighborByDirection(ctx, window, dir);
-    if (neighbor) ctx.currentWindow = neighbor;
+    if (window !== null) {
+      const neighbor = this.getNeighborByDirection(ctx, window, dir);
+      if (neighbor) {
+        ctx.currentWindow = neighbor;
+        return;
+      }
+    }
+    if (ctx.focusOutput(window, dir)) return;
+    ctx.focusVDesktop(window, dir);
   }
 
   /**
