@@ -10,7 +10,7 @@ class Rect {
     public x: number,
     public y: number,
     public width: number,
-    public height: number
+    public height: number,
   ) {}
 
   public get maxX(): number {
@@ -48,7 +48,7 @@ class Rect {
       this.x + left,
       this.y + top,
       this.width - (left + right),
-      this.height - (top + bottom)
+      this.height - (top + bottom),
     );
   }
 
@@ -56,7 +56,7 @@ class Rect {
     left: number,
     right: number,
     top: number,
-    bottom: number
+    bottom: number,
   ): this {
     this.x += left;
     this.y += top;
@@ -76,7 +76,7 @@ class Rect {
 
   public includesPoint(
     [x, y]: [number, number],
-    part: RectParts = RectParts.Whole
+    part: RectParts = RectParts.Whole,
   ): boolean {
     if (part === RectParts.Top)
       return (
@@ -113,7 +113,7 @@ class Rect {
 
   public isTopZone(
     [x, y]: [number, number],
-    activeZone: percentType = 10
+    activeZone: percentType = 10,
   ): boolean {
     return (
       this.y <= y &&
@@ -125,7 +125,7 @@ class Rect {
 
   public isBottomZone(
     [x, y]: [number, number],
-    activeZone: percentType = 10
+    activeZone: percentType = 10,
   ): boolean {
     return (
       y >= this.maxY - (this.height * activeZone) / 100 &&
@@ -137,7 +137,7 @@ class Rect {
 
   public isLeftZone(
     [x, y]: [number, number],
-    activeZone: percentType = 10
+    activeZone: percentType = 10,
   ): boolean {
     return (
       this.x <= x &&
@@ -149,7 +149,7 @@ class Rect {
 
   public isRightZone(
     [x, y]: [number, number],
-    activeZone: percentType = 10
+    activeZone: percentType = 10,
   ): boolean {
     return (
       x >= this.maxX - (this.width * activeZone) / 100 &&
@@ -164,7 +164,7 @@ class Rect {
       this.x - other.x,
       this.y - other.y,
       this.width - other.width,
-      this.height - other.height
+      this.height - other.height,
     );
   }
 
@@ -172,14 +172,21 @@ class Rect {
     if (coordinate === "x") {
       return Math.max(
         0,
-        Math.min(this.maxX, other.maxX) - Math.max(this.x, other.x)
+        Math.min(this.maxX, other.maxX) - Math.max(this.x, other.x),
       );
     } else {
       return Math.max(
         0,
-        Math.min(this.maxY, other.maxY) - Math.max(this.y, other.y)
+        Math.min(this.maxY, other.maxY) - Math.max(this.y, other.y),
       );
     }
+  }
+
+  public distance(other: Rect): number {
+    return Math.sqrt(
+      (this.center[0] - other.center[0]) ** 2 +
+        (this.center[1] - other.center[1]) ** 2,
+    );
   }
 
   public toString(): string {

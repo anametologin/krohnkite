@@ -8,6 +8,26 @@
 type percentType = number;
 type Direction = "up" | "down" | "left" | "right";
 type Position = "left" | "middle" | "right" | "upper" | "bottom" | "single";
+function getOppositeDirection(direction: Direction): Direction {
+  switch (direction) {
+    case "right":
+      return "left";
+    case "left":
+      return "right";
+    case "up":
+      return "down";
+    case "down":
+      return "up";
+  }
+}
+const OppositeDirection = {
+  Left: "right",
+  Right: "left",
+  Up: "down",
+  Down: "up",
+};
+type OppositeDirection =
+  (typeof OppositeDirection)[keyof typeof OppositeDirection];
 
 const WindowState = {
   /* initial value */
@@ -296,6 +316,8 @@ interface IDriverContext {
   moveWindowsToScreen(windowsToScreen: [Output, WindowClass[]][]): void;
   moveToScreen(window: WindowClass, direction: Direction): boolean;
   moveToVDesktop(window: WindowClass, direction: Direction): boolean;
+  focusOutput(window: WindowClass | null, direction: Direction): boolean;
+  focusVDesktop(window: WindowClass | null, direction: Direction): void;
   metaPushed(): void;
 }
 
