@@ -5,7 +5,7 @@
 */
 
 class ColumnsLayout implements ILayout {
-  public static readonly id = "Columns";
+  public static readonly id = "ColumnsLayout";
   public parts: ColumnLayout[];
   public readonly classID = ColumnsLayout.id;
   public readonly capacity?: number | null;
@@ -34,7 +34,7 @@ class ColumnsLayout implements ILayout {
     tiles: WindowClass[],
     basis: WindowClass,
     delta: RectDelta,
-    gap: number
+    gap: number,
   ) {
     let columnId = this.getColumnId(basis);
     if (columnId === null) return;
@@ -62,7 +62,7 @@ class ColumnsLayout implements ILayout {
         gap,
         isReverse ? columnsLength - 1 - columnId : columnId,
         delta,
-        this.direction.east || this.direction.west
+        this.direction.east || this.direction.west,
       );
 
       weights.forEach((weight, i) => {
@@ -84,7 +84,7 @@ class ColumnsLayout implements ILayout {
     ctx: EngineContext,
     tileables: WindowClass[],
     area: Rect,
-    gap: number
+    gap: number,
   ): void {
     if (this.columnsConfiguration === null)
       this.columnsConfiguration = this.getDefaultConfig(ctx);
@@ -103,7 +103,7 @@ class ColumnsLayout implements ILayout {
       area,
       weights,
       gap,
-      this.direction.east || this.direction.west
+      this.direction.east || this.direction.west,
     );
     if (this.direction.east || this.direction.south) {
       let i = 0;
@@ -124,7 +124,7 @@ class ColumnsLayout implements ILayout {
     ctx: EngineContext,
     draggingRect: Rect,
     window: WindowClass,
-    workingArea: Rect
+    workingArea: Rect,
   ): boolean {
     const cursorOrActivationPoint =
       ctx.cursorPos || draggingRect.activationPoint;
@@ -192,17 +192,17 @@ class ColumnsLayout implements ILayout {
           (this.direction.west &&
             renderedRect.includesPoint(
               cursorOrActivationPoint,
-              RectParts.Top
+              RectParts.Top,
             )) ||
           (this.direction.north &&
             renderedRect.includesPoint(
               cursorOrActivationPoint,
-              RectParts.Left
+              RectParts.Left,
             )) ||
           (this.direction.east &&
             renderedRect.includesPoint(
               cursorOrActivationPoint,
-              RectParts.Top
+              RectParts.Top,
             )) ||
           (this.direction.south &&
             renderedRect.includesPoint(cursorOrActivationPoint, RectParts.Left))
@@ -224,22 +224,22 @@ class ColumnsLayout implements ILayout {
           (this.direction.west &&
             renderedRect.includesPoint(
               cursorOrActivationPoint,
-              RectParts.Bottom
+              RectParts.Bottom,
             )) ||
           (this.direction.north &&
             renderedRect.includesPoint(
               cursorOrActivationPoint,
-              RectParts.Right
+              RectParts.Right,
             )) ||
           (this.direction.east &&
             renderedRect.includesPoint(
               cursorOrActivationPoint,
-              RectParts.Bottom
+              RectParts.Bottom,
             )) ||
           (this.direction.south &&
             renderedRect.includesPoint(
               cursorOrActivationPoint,
-              RectParts.Right
+              RectParts.Right,
             ))
         ) {
           if (column.renderedWindowsIds[i] === windowId) return false;
@@ -585,7 +585,7 @@ class ColumnsLayout implements ILayout {
           let columnWeight = parseFloat(conf_arr[i]);
           if (isNaN(columnWeight)) {
             warning(
-              `Columns conf:${conf_arr}: ${conf_arr[i]} is not a number.`
+              `Columns conf:${conf_arr}: ${conf_arr[i]} is not a number.`,
             );
             returnValue = [];
             break;

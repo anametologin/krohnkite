@@ -6,7 +6,7 @@
 */
 
 class FloatingLayout implements ILayout {
-  public static readonly id = "FloatingLayout ";
+  public static readonly id = "FloatingLayout";
   public static instance = new FloatingLayout();
 
   public readonly classID = FloatingLayout.id;
@@ -16,10 +16,10 @@ class FloatingLayout implements ILayout {
     ctx: EngineContext,
     tileables: WindowClass[],
     area: Rect,
-    gap: number
+    gap: number,
   ): void {
     tileables.forEach(
-      (tileable: WindowClass) => (tileable.state = WindowState.TiledAfloat)
+      (tileable: WindowClass) => (tileable.state = WindowState.TiledAfloat),
     );
   }
 
