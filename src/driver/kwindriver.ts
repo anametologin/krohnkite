@@ -336,9 +336,98 @@ class KWinDriver implements IDriverContext {
     return sourceOutput !== currentOutput ? sourceOutput : null;
   }
 
-  public focusOutput(
-    window: WindowClass | null,
+  public focusSpecial(direction: Direction) {
+    switch (direction) {
+      case "up": {
+        let screens = this.workspace.screens;
+        if (screens.length === 1) return true;
+        let output = this.workspace.activeScreen;
+        let idx = screens.indexOf(output);
+        if (idx < 0) {
+          warning(`kwindriver: focusNeighborWindow: screen doesn't found.`);
+          return;
+        }
+        idx = idx < screens.length - 1 ? idx + 1 : 0;
+        this.makeActiveScreen(screens[idx]);
+        return;
+      }
+      case "down": {
+        let window = this.workspace.activeWindow;
+        if (!window) return;
+        let windows = this._getWindowsByDirection(
+          WinTypes.special,
+          this.currentSurface,
+          toRect(window.frameGeometry),
+          direction,
+        );
+        let idx = windows.indexOf(window);
+        if (idx < 0) {
+          this.workspace.activeWindow = windows[0];
+          return;
+        }
+        if (windows.length === 1) return;
+        idx = idx < windows.length - 1 ? idx + 1 : 0;
+        this.workspace.activeWindow = windows[idx];
+        return;
+      }
+      case "right":
+      case "left": {
+        let desktops = this.workspace.desktops;
+        if (desktops.length === 1) return true;
+        let currentDesktop = this.workspace.currentDesktop;
+        let idx = desktops.indexOf(currentDesktop);
+        if (idx < 0) {
+          warning(`kwindriver: focusNeighborWindow: vDesktop doesn't found.`);
+          return;
+        }
+        if (direction === "left") {
+          idx = idx > 0 ? idx - 1 : desktops.length - 1;
+        } else {
+          idx = idx < desktops.length - 1 ? idx + 1 : 0;
+        }
+        this.workspace.currentDesktop = desktops[idx];
+        return;
+      }
+    }
+  }
+  public focusNeighborWindow(
     direction: Direction,
+    winTypes: WinTypes,
+  ): Window | null | boolean {
+    let window = this.workspace.activeWindow;
+    if (!window) return null;
+    let windows = this._getWindowsByDirection(
+      winTypes,
+      this.currentSurface,
+      toRect(window.frameGeometry),
+      direction,
+    );
+    if (windows.length === 0) return null;
+    let idx = windows.indexOf(window);
+    if (idx < 0) {
+      this.workspace.activeWindow = windows[0];
+      return true;
+    }
+    if (windows.length === 1) return window;
+
+    if (
+      this._setFocusOnSurface(
+        window,
+        this.currentSurface,
+        direction,
+        winTypes,
+        windows,
+      )
+    )
+      return true;
+
+    return window;
+  }
+
+  public focusOutput(
+    window: Window | null,
+    direction: Direction,
+    winTypes: WinTypes,
   ): boolean {
     let neighbor = this.getNeighborOutput(
       direction,
@@ -350,10 +439,17 @@ class KWinDriver implements IDriverContext {
       this.workspace.currentActivity,
       this.workspace.currentDesktop,
     );
-    return this._setFocus(window, neighbor_surface, direction);
+    if (!this._setFocusOnSurface(window, neighbor_surface, direction, winTypes))
+      this.makeActiveScreen(neighbor_surface.output);
+
+    return true;
   }
 
-  public focusVDesktop(window: WindowClass | null, direction: Direction): void {
+  public focusVDesktop(
+    window: Window | null,
+    direction: Direction,
+    winTypes: WinTypes,
+  ): void {
     let neighbor = this.getNeighborVirtualDesktop(direction);
     let neighbor_surface: ISurface;
     if (neighbor === null) return;
@@ -372,56 +468,252 @@ class KWinDriver implements IDriverContext {
         neighbor,
       );
     }
-    this._setFocus(window, neighbor_surface, direction);
+    this._setFocusOnSurface(window, neighbor_surface, direction, winTypes);
   }
 
-  private _setFocus(
-    window: WindowClass | null,
-    neighbor_surface: ISurface,
+  private _setFocusOnSurface(
+    window: Window | null,
+    surface: ISurface,
     direction: Direction,
-  ): boolean {
+    winTypes: WinTypes,
+    localWindows: Window[] | null = null,
+  ) {
     let sourceRect: Rect;
-    let tileables = this.engine.windows.getVisibleTileables(neighbor_surface);
-    if (tileables.length > 0) {
-      if (window !== null) {
-        sourceRect = window.actualGeometry;
-      } else {
-        let nG = toRect(neighbor_surface.output.geometry);
-        switch (direction) {
-          case "left": {
-            sourceRect = new Rect(nG.maxX - 30, nG.y, 30, nG.height);
-            break;
-          }
-          case "right": {
-            sourceRect = new Rect(nG.x, nG.y, 30, nG.height);
-            break;
-          }
-          case "up": {
-            sourceRect = new Rect(nG.x, nG.maxY - 30, nG.width, 30);
-            break;
-          }
-          case "down": {
-            sourceRect = new Rect(nG.x, nG.y, nG.width, 30);
-            break;
-          }
+    if (localWindows !== null && window !== null) {
+      sourceRect = toRect(window.frameGeometry);
+    } else if (window !== null) {
+      let tG = toRect(surface.output.geometry);
+      let sG = window.output.geometry;
+      let winRect = toRect(window.frameGeometry);
+
+      switch (direction) {
+        case "left": {
+          let y_ratio = (winRect.y - sG.y) / sG.height;
+          let y = tG.y + tG.height * y_ratio;
+          sourceRect = new Rect(
+            tG.maxX - 5,
+            y,
+            5,
+            y + winRect.height < tG.y + tG.height
+              ? winRect.height
+              : tG.height - (y - tG.y),
+          );
+          break;
+        }
+        case "right": {
+          let y_ratio = (winRect.y - sG.y) / sG.height;
+          let y = tG.y + tG.height * y_ratio;
+          sourceRect = new Rect(
+            tG.x,
+            y,
+            5,
+            y + winRect.height < tG.y + tG.height
+              ? winRect.height
+              : tG.height - (y - tG.y),
+          );
+          break;
+        }
+        case "up": {
+          let x_ratio = (winRect.x - sG.x) / sG.width;
+          let x = tG.x + tG.width * x_ratio;
+          sourceRect = new Rect(
+            x,
+            tG.maxY - 5,
+            x + winRect.width < tG.x + tG.width
+              ? winRect.width
+              : tG.width - (x - tG.x),
+            5,
+          );
+          break;
+        }
+        case "down": {
+          let x_ratio = (winRect.x - sG.x) / sG.width;
+          let x = tG.x + tG.width * x_ratio;
+          sourceRect = new Rect(
+            x,
+            tG.y,
+            x + winRect.width < tG.x + tG.width
+              ? winRect.width
+              : tG.width - (x - tG.x),
+            5,
+          );
+          break;
         }
       }
-      let focusCandidate: WindowClass | null = null;
-      let distance = null;
-      let d;
-      for (let tile of tileables) {
-        d = sourceRect.distance(tile.actualGeometry);
-        if (focusCandidate === null || distance === null || d < distance) {
-          distance = d;
-          focusCandidate = tile;
+    } else {
+      let nG = toRect(surface.output.geometry);
+      switch (direction) {
+        case "left": {
+          sourceRect = new Rect(nG.maxX - 5, nG.y, 5, nG.height);
+          break;
+        }
+        case "right": {
+          sourceRect = new Rect(nG.x, nG.y, 5, nG.height);
+          break;
+        }
+        case "up": {
+          sourceRect = new Rect(nG.x, nG.maxY - 5, nG.width, 5);
+          break;
+        }
+        case "down": {
+          sourceRect = new Rect(nG.x, nG.y, nG.width, 5);
+          break;
         }
       }
-      if (focusCandidate !== null) this.currentWindow = focusCandidate;
+    }
+    let windows: Window[];
+    if (localWindows !== null) {
+      windows = localWindows;
+    } else {
+      windows = this._getWindowsByDirection(
+        winTypes,
+        surface,
+        sourceRect,
+        direction,
+      );
+    }
+    let focusCandidate: Window | null = null;
+    let fCTimeStamp: number | null | undefined = null;
+    let distance = null;
+    let d;
+    for (let win of windows) {
+      if (window !== null && win === window) continue;
+      let winRect = toRect(win.bufferGeometry);
+      d =
+        sourceRect.distance(winRect) +
+        sourceRect.overallDimension(winRect, direction);
+      if (focusCandidate === null || distance === null || d < distance) {
+        distance = d;
+        focusCandidate = win;
+      } else if (focusCandidate !== null && d === distance) {
+        if (fCTimeStamp === null) {
+          fCTimeStamp = this.engine.windows.getWindowById(
+            String(focusCandidate.internalId),
+          )?.timestamp;
+        }
+        let timestamp = this.engine.windows.getWindowById(
+          String(win.internalId),
+        )?.timestamp;
+        if (
+          (timestamp && fCTimeStamp && timestamp < fCTimeStamp) ||
+          (timestamp && !fCTimeStamp)
+        ) {
+          fCTimeStamp = timestamp;
+          focusCandidate = win;
+        }
+      }
+    }
+    if (focusCandidate !== null) {
+      this.workspace.activeWindow = focusCandidate;
       return true;
     } else {
-      this.makeActiveScreen(neighbor_surface.output);
-      return true;
+      return false;
     }
+  }
+
+  private _getWindowsByDirection(
+    wType: WinTypes,
+    surface: ISurface,
+    rect: Rect,
+    direction: Direction,
+    window?: Window,
+  ): Window[] {
+    let windows: Window[] = [];
+    function mapWinClassToKWinWindow(winClassWindows: WindowClass[]): Window[] {
+      return winClassWindows.map(
+        (winClassWin) => (winClassWin.window as KWinWindow).window,
+      );
+    }
+    switch (wType) {
+      case WinTypes.tiled | WinTypes.docked | WinTypes.float: {
+        windows = mapWinClassToKWinWindow(
+          this.engine.windows.getVisibleWindows(surface),
+        );
+        break;
+      }
+      case WinTypes.surfaces: {
+        windows = [];
+        break;
+      }
+      case WinTypes.tiled: {
+        windows = mapWinClassToKWinWindow(
+          this.engine.windows.getVisibleTiles(surface),
+        );
+        break;
+      }
+      case WinTypes.float: {
+        windows = mapWinClassToKWinWindow(
+          this.engine.windows.getVisibleFloat(surface),
+        );
+        break;
+      }
+      case WinTypes.docked: {
+        windows = mapWinClassToKWinWindow(
+          this.engine.windows.getVisibleDocked(surface),
+        );
+        break;
+      }
+      case WinTypes.tiled | WinTypes.float: {
+        windows = mapWinClassToKWinWindow(
+          this.engine.windows.getVisibleTilesOrFloat(surface),
+        );
+        break;
+      }
+      case WinTypes.tiled | WinTypes.docked: {
+        windows = mapWinClassToKWinWindow(
+          this.engine.windows.getVisibleTilesOrDocked(surface),
+        );
+        break;
+      }
+      case WinTypes.float | WinTypes.docked: {
+        windows = mapWinClassToKWinWindow(
+          this.engine.windows.getVisibleFloatOrDocked(surface),
+        );
+        break;
+      }
+      case WinTypes.special: {
+        windows = this.workspace.stackingOrder.filter(
+          (win) =>
+            win.output === surface.output &&
+            (win.desktops.length === 0 ||
+              win.desktops.indexOf(surface.vDesktop) > -1) &&
+            !win.minimized &&
+            !win.hidden &&
+            !win.deleted &&
+            win.resourceClass !== "plasmashell",
+        );
+        return windows;
+      }
+    }
+    let filterFunc: (r: Rect) => boolean;
+    switch (direction) {
+      case "left":
+        filterFunc = (r) => {
+          return rect.x >= r.x && rect.intersection(r, "y") > 0;
+        };
+        break;
+      case "right":
+        filterFunc = (r) => {
+          return rect.x <= r.x && rect.intersection(r, "y") > 0;
+        };
+        break;
+      case "up":
+        filterFunc = (r) => {
+          return rect.y >= r.y && rect.intersection(r, "x") > 0;
+        };
+        break;
+      case "down":
+        filterFunc = (r) => {
+          return rect.y <= r.y && rect.intersection(r, "x") > 0;
+        };
+        break;
+    }
+    windows = windows.filter((win) => {
+      if (window && window === win) return false;
+      let r = toRect(win.frameGeometry);
+      return filterFunc(r);
+    });
+    return windows;
   }
 
   private getNeighborVirtualDesktop(

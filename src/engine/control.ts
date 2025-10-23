@@ -28,6 +28,7 @@ class TilingController {
   public onSurfaceUpdate(ctx: IDriverContext): void {
     this.engine.arrange(ctx, getMethodName());
   }
+
   public onCurrentActivityChanged(ctx: IDriverContext): void {
     this.engine.arrange(ctx, getMethodName());
   }
@@ -40,7 +41,7 @@ class TilingController {
     this.engine.manage(window);
 
     /* move window to next surface if the current surface is "full" */
-    if (window.tileable) {
+    if (window.isTileable) {
       const srf = ctx.currentSurface;
       const tiles = this.engine.windows.getVisibleTiles(srf);
     }
@@ -171,7 +172,7 @@ class TilingController {
   }
 
   public onWindowResizeOver(ctx: IDriverContext, window: WindowClass): void {
-    if (CONFIG.adjustLayout && window.tiled) {
+    if (CONFIG.adjustLayout && window.isTiled) {
       this.engine.adjustLayout(window);
       this.engine.arrange(ctx, getMethodName());
     } else if (window.state === WindowState.Docked) {
@@ -295,16 +296,20 @@ class TilingController {
         this.engine.focusOrder(ctx, -1);
         break;
 
+      case Shortcut.MetaFocusUp:
       case Shortcut.FocusUp:
         this.engine.focusDir(ctx, "up");
         break;
+      case Shortcut.MetaFocusDown:
       case Shortcut.FocusDown:
         this.engine.focusDir(ctx, "down");
         break;
+      case Shortcut.MetaFocusLeft:
       case Shortcut.DWMLeft:
       case Shortcut.FocusLeft:
         this.engine.focusDir(ctx, "left");
         break;
+      case Shortcut.MetaFocusRight:
       case Shortcut.DWMRight:
       case Shortcut.FocusRight:
         this.engine.focusDir(ctx, "right");
@@ -433,7 +438,7 @@ class TilingController {
         currentCapacity = this.engine.lowerSurfaceCapacity(ctx);
         ctx.showNotification(`Surface capacity: ${currentCapacity}`);
         break;
-      case Shortcut.ResetSurfaceCapacity:
+      case Shortcut.MetaResetSurfaceCapacity:
         currentCapacity = this.engine.ResetSurfaceCapacity(ctx);
         ctx.showNotification(
           `Surface capacity: ${currentCapacity !== null ? currentCapacity : "unlimited"}`,
@@ -446,8 +451,8 @@ class TilingController {
   }
 
   private _initMetaShortcuts() {
-    let metaShortcuts: { [key: string]: Shortcut } = {};
-    CONFIG.metaConfig.forEach((shortcutPair) => {
+    let metaShortcuts: { [key: string]: Shortcut } = CONFIG.defaultMetaConfig;
+    CONFIG.metaConf.forEach((shortcutPair) => {
       let splitted = shortcutPair.split("=").map((p) => p.trim());
       if (splitted.length !== 2) {
         warning(`"Meta Config: ${splitted}" have to has the one equal sign`);

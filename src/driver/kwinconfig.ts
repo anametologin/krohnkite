@@ -4,6 +4,24 @@
 
     SPDX-License-Identifier: MIT
 */
+enum WinTypes {
+  tiled = 1,
+  docked = 2,
+  float = 4,
+  surfaces = 8,
+  special = 16,
+}
+const winTypesCfg = [
+  WinTypes.docked | WinTypes.float | WinTypes.tiled,
+  WinTypes.surfaces,
+  WinTypes.tiled,
+  WinTypes.float,
+  WinTypes.docked,
+  WinTypes.tiled | WinTypes.float,
+  WinTypes.tiled | WinTypes.docked,
+  WinTypes.float | WinTypes.docked,
+  WinTypes.special,
+];
 
 interface ISortedLayouts {
   order: number;
@@ -47,7 +65,14 @@ class KWinConfig implements IConfig {
   public adjustLayout: boolean;
   public adjustLayoutLive: boolean;
   public directionalKeyMode: "dwm" | "focus";
-  public metaConfig: string[];
+  public focusNormalCfg: WinTypes;
+  public focusMetaCfg: WinTypes;
+  public focusNormalDisableScreens: boolean;
+  public focusNormalDisableVDesktops: boolean;
+  public focusMetaDisableScreens: boolean;
+  public focusMetaDisableVDesktops: boolean;
+  public defaultMetaConfig: { [key: string]: Shortcut };
+  public metaConf: string[];
   public metaTimeout: number;
   public metaIsToggle: boolean;
   public metaIsPushedTwice: boolean;
@@ -207,13 +232,51 @@ class KWinConfig implements IConfig {
       ? "focus"
       : "dwm";
 
-    this.metaConfig = separate(
-      KWIN.readConfig(
-        "metaConfig",
-        "RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext",
-      ),
-      "\n",
+    this.focusNormalCfg =
+      winTypesCfg[
+        validateNumberWithDefault(
+          KWIN.readConfig("focusNormal", 0),
+          0,
+          "focusNormal",
+          0,
+          winTypesCfg.length,
+        )
+      ];
+    this.focusMetaCfg =
+      winTypesCfg[
+        validateNumberWithDefault(
+          KWIN.readConfig("focusMeta", 1),
+          1,
+          "focusMeta",
+          0,
+          winTypesCfg.length,
+        )
+      ];
+
+    this.focusNormalDisableScreens = KWIN.readConfig(
+      "focusNormalDisableScreens",
+      false,
     );
+    this.focusNormalDisableVDesktops = KWIN.readConfig(
+      "focusNormalDisableVDesktops",
+      false,
+    );
+    this.focusMetaDisableScreens = KWIN.readConfig(
+      "focusMetaDisableScreens",
+      false,
+    );
+    this.focusMetaDisableVDesktops = KWIN.readConfig(
+      "focusMetaDisableVDesktops",
+      false,
+    );
+    this.defaultMetaConfig = {
+      RaiseSurfaceCapacity: Shortcut.MetaResetSurfaceCapacity,
+      FocusLeft: Shortcut.MetaFocusLeft,
+      FocusRight: Shortcut.MetaFocusRight,
+      FocusUp: Shortcut.MetaFocusUp,
+      FocusDown: Shortcut.MetaFocusDown,
+    };
+    this.metaConf = separate(KWIN.readConfig("metaConf", ""), "\n");
     this.metaTimeout = validateNumberWithDefault(
       KWIN.readConfig("metaTimeout", 3000),
       3000,

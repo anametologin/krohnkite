@@ -487,7 +487,7 @@ class TilingEngine {
         screenData.workingArea.height * CONFIG.limitTileWidthRatio,
       );
       screenData.tileables
-        .filter((tile) => tile.tiled && tile.geometry.width > maxWidth)
+        .filter((tile) => tile.isTiled && tile.geometry.width > maxWidth)
         .forEach((tile) => {
           const g = tile.geometry;
           tile.geometry = new Rect(
@@ -523,9 +523,9 @@ class TilingEngine {
    * move/resize such windows back to where/how they should be.
    */
   public enforceSize(ctx: IDriverContext, window: WindowClass) {
-    if (window.tiled && !window.actualGeometry.equals(window.geometry))
+    if (window.isTiled && !window.actualGeometry.equals(window.geometry))
       ctx.setTimeout(() => {
-        if (window.tiled) window.commit();
+        if (window.isTiled) window.commit();
       }, 10);
   }
 
@@ -588,26 +588,28 @@ class TilingEngine {
    * Focus a neighbor at the given direction.
    */
   public focusDir(ctx: IDriverContext, dir: Direction) {
-    const window = ctx.currentWindow;
-
-    /* if no current window, select the first tile. */
-    if (window === null) {
-      const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
-      if (tiles.length > 0) {
-        ctx.currentWindow = tiles[0];
-        return;
-      }
+    let winTypes = ctx.isMetaMode ? CONFIG.focusMetaCfg : CONFIG.focusNormalCfg;
+    if (winTypes === WinTypes.special) {
+      ctx.focusSpecial(dir);
+      return;
     }
-
-    if (window !== null) {
-      const neighbor = this.getNeighborByDirection(ctx, window, dir);
-      if (neighbor) {
-        ctx.currentWindow = neighbor;
-        return;
-      }
+    let surfaceWin = ctx.focusNeighborWindow(dir, winTypes);
+    if (surfaceWin === true) {
+      return;
     }
-    if (ctx.focusOutput(window, dir)) return;
-    ctx.focusVDesktop(window, dir);
+    if (surfaceWin === false) surfaceWin = null;
+    if (
+      ((!ctx.isMetaMode && !CONFIG.focusNormalDisableScreens) ||
+        (ctx.isMetaMode && !CONFIG.focusMetaDisableScreens)) &&
+      ctx.focusOutput(surfaceWin, dir, winTypes)
+    )
+      return;
+
+    if (
+      (!ctx.isMetaMode && !CONFIG.focusNormalDisableVDesktops) ||
+      (ctx.isMetaMode && !CONFIG.focusMetaDisableVDesktops)
+    )
+      ctx.focusVDesktop(surfaceWin, dir, winTypes);
   }
 
   /**
@@ -734,7 +736,9 @@ class TilingEngine {
    * Toggle float mode of window.
    */
   public toggleFloat(window: WindowClass) {
-    window.state = !window.tileable ? WindowState.Tiled : WindowState.Floating;
+    window.state = !window.isTileable
+      ? WindowState.Tiled
+      : WindowState.Floating;
   }
 
   /**
@@ -845,9 +849,9 @@ class TilingEngine {
       default:
         return null;
     }
+    let windows = this.windows.getVisibleTileables(ctx.currentSurface);
 
-    const candidates = this.windows
-      .getVisibleTiles(ctx.currentSurface)
+    const candidates = windows
       .filter(
         vertical
           ? (tile) => tile.geometry.y * sign > basis.geometry.y * sign

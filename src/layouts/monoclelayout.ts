@@ -15,7 +15,7 @@ class MonocleLayout implements ILayout {
     ctx: EngineContext,
     tileables: WindowClass[],
     area: Rect,
-    gap: number
+    gap: number,
   ): void {
     /* Tile all tileables */
     tileables.forEach((tile) => {
@@ -33,7 +33,7 @@ class MonocleLayout implements ILayout {
       const tiles = [...tileables];
       ctx.setTimeout(() => {
         const current = ctx.currentWindow;
-        if (current && current.tiled) {
+        if (current && current.isTiled) {
           tiles.forEach((window) => {
             if (window !== current)
               (window.window as KWinWindow).window.minimized = true;
@@ -51,7 +51,7 @@ class MonocleLayout implements ILayout {
   public handleShortcut(
     ctx: EngineContext,
     input: Shortcut,
-    data?: any
+    data?: any,
   ): boolean {
     switch (input) {
       // case Shortcut.Up:

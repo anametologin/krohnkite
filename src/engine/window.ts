@@ -23,6 +23,10 @@ class WindowClass {
     return state === WindowState.Floating || state === WindowState.TiledAfloat;
   }
 
+  public static isDockedState(state: WindowState): boolean {
+    return state === WindowState.Docked;
+  }
+
   public readonly id: string;
   public readonly window: IDriverWindow;
 
@@ -37,16 +41,20 @@ class WindowClass {
   }
 
   /** If this window ***can be*** tiled by layout. */
-  public get tileable(): boolean {
+  public get isTileable(): boolean {
     return WindowClass.isTileableState(this.state);
   }
   /** If this window is ***already*** tiled, thus a part of the current layout. */
-  public get tiled(): boolean {
+  public get isTiled(): boolean {
     return WindowClass.isTiledState(this.state);
   }
   /** If this window is floating, thus its geometry is not tightly managed. */
-  public get floating(): boolean {
+  public get isFloating(): boolean {
     return WindowClass.isFloatingState(this.state);
+  }
+
+  public get isDocked(): boolean {
+    return WindowClass.isDockedState(this.state);
   }
 
   public get geometryDelta(): RectDelta | null {

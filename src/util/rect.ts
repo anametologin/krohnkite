@@ -168,7 +168,7 @@ class Rect {
     );
   }
 
-  public intersection(other: Rect, coordinate: "x" | "y") {
+  public intersection(other: Rect, coordinate: "x" | "y"): number {
     if (coordinate === "x") {
       return Math.max(
         0,
@@ -187,6 +187,19 @@ class Rect {
       (this.center[0] - other.center[0]) ** 2 +
         (this.center[1] - other.center[1]) ** 2,
     );
+  }
+
+  public overallDimension(other: Rect, direction: Direction): number {
+    switch (direction) {
+      case "left":
+        return Math.abs(this.x - other.x);
+      case "right":
+        return Math.abs(this.maxX - other.maxX);
+      case "up":
+        return Math.abs(this.y - other.y);
+      case "down":
+        return Math.abs(this.maxY - other.maxY);
+    }
   }
 
   public toString(): string {

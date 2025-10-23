@@ -84,26 +84,49 @@ class WindowStore {
   public unshift(window: WindowClass) {
     this.list.unshift(window);
   }
-  //#endregion
 
-  //#region Querying Windows
+  /** Return all visible "Tile" and "Docked" windows on the given surface. */
+  public getVisibleTilesOrDocked(srf: ISurface): WindowClass[] {
+    return this.list.filter(
+      (win) => win.visible(srf) && (win.isTiled || win.isDocked),
+    );
+  }
+  /** Return all visible "Tile" and "Float" windows on the given surface. */
+  public getVisibleTilesOrFloat(srf: ISurface): WindowClass[] {
+    return this.list.filter(
+      (win) => win.visible(srf) && (win.isTiled || win.isFloating),
+    );
+  }
+  /** Return all visible "Float" and "Docked" windows on the given surface. */
+  public getVisibleFloatOrDocked(srf: ISurface): WindowClass[] {
+    return this.list.filter(
+      (win) => win.visible(srf) && (win.isFloating || win.isDocked),
+    );
+  }
+  /** Return all visible "Tile" windows on the given surface. */
+  public getVisibleTiles(srf: ISurface): WindowClass[] {
+    return this.list.filter((win) => win.isTiled && win.visible(srf));
+  }
+  /** Return all visible "Tile" windows on the given surface. */
+  public getVisibleDocked(srf: ISurface): WindowClass[] {
+    return this.list.filter((win) => win.isDocked && win.visible(srf));
+  }
+  /** Return all visible "Float" windows on the given surface. */
+  public getVisibleFloat(srf: ISurface): WindowClass[] {
+    return this.list.filter((win) => win.isFloating && win.visible(srf));
+  }
 
   /** Returns all visible windows on the given surface. */
   public getVisibleWindows(srf: ISurface): WindowClass[] {
     return this.list.filter((win) => win.visible(srf));
   }
 
-  /** Return all visible "Tile" windows on the given surface. */
-  public getVisibleTiles(srf: ISurface): WindowClass[] {
-    return this.list.filter((win) => win.tiled && win.visible(srf));
-  }
-
   /**
    * Return all visible "tileable" windows on the given surface
-   * @see WindowClass#tileable
+   * @see WindowClass#isTileable
    */
   public getVisibleTileables(srf: ISurface): WindowClass[] {
-    return this.list.filter((win) => win.tileable && win.visible(srf));
+    return this.list.filter((win) => win.isTileable && win.visible(srf));
   }
 
   //#endregion

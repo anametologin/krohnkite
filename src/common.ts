@@ -20,14 +20,6 @@ function getOppositeDirection(direction: Direction): Direction {
       return "up";
   }
 }
-const OppositeDirection = {
-  Left: "right",
-  Right: "left",
-  Up: "down",
-  Down: "up",
-};
-type OppositeDirection =
-  (typeof OppositeDirection)[keyof typeof OppositeDirection];
 
 const WindowState = {
   /* initial value */
@@ -100,7 +92,11 @@ const Shortcut = {
 
   KrohnkiteMeta: "KrohnkiteMeta",
 
-  ResetSurfaceCapacity: "ResetSurfaceCapacity",
+  MetaResetSurfaceCapacity: "MetaResetSurfaceCapacity",
+  MetaFocusLeft: "MetaFocusLeft",
+  MetaFocusRight: "MetaFocusRight",
+  MetaFocusUp: "MetaFocusUp",
+  MetaFocusDown: "MetaFocusDown",
 } as const;
 type Shortcut = (typeof Shortcut)[keyof typeof Shortcut];
 
@@ -187,7 +183,14 @@ interface IConfig {
   adjustLayout: boolean;
   adjustLayoutLive: boolean;
   directionalKeyMode: "dwm" | "focus";
-  metaConfig: string[];
+  focusNormalCfg: WinTypes;
+  focusNormalDisableScreens: boolean;
+  focusNormalDisableVDesktops: boolean;
+  focusMetaCfg: WinTypes;
+  focusMetaDisableScreens: boolean;
+  focusMetaDisableVDesktops: boolean;
+  defaultMetaConfig: { [key: string]: Shortcut };
+  metaConf: string[];
   metaTimeout: number;
   metaIsToggle: boolean;
   metaIsPushedTwice: boolean;
@@ -316,8 +319,21 @@ interface IDriverContext {
   moveWindowsToScreen(windowsToScreen: [Output, WindowClass[]][]): void;
   moveToScreen(window: WindowClass, direction: Direction): boolean;
   moveToVDesktop(window: WindowClass, direction: Direction): boolean;
-  focusOutput(window: WindowClass | null, direction: Direction): boolean;
-  focusVDesktop(window: WindowClass | null, direction: Direction): void;
+  focusSpecial(direction: Direction): void;
+  focusNeighborWindow(
+    direction: Direction,
+    winTypes: WinTypes,
+  ): Window | null | boolean;
+  focusOutput(
+    window: Window | null,
+    direction: Direction,
+    winTypes: WinTypes,
+  ): boolean;
+  focusVDesktop(
+    window: Window | null,
+    direction: Direction,
+    winTypes: WinTypes,
+  ): void;
   metaPushed(): void;
 }
 

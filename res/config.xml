@@ -226,9 +226,35 @@
         <default>true</default>
     </entry>
 
-    <entry name="metaConfig" type="String">
+    <entry name="focusNormal" type="Int">
+        <label>What types of window can be focused using Krohnkite's focus keys.</label>
+        <default>0</default>
+    </entry>
+    <entry name="focusMeta" type="Int">
+        <label>What types of window can be focused using Krohnkite's meta focus shortcuts.</label>
+        <default>1</default>
+    </entry>
+    <entry name="focusNormalDisableScreens" type="Bool">
+	    <label>Disable switching on adjacent screens for focus</label>
+        <default>false</default>
+    </entry>
+    <entry name="focusNormalDisableVDesktops" type="Bool">
+	    <label>Disable switching to other virtual desktops for focus</label>
+        <default>false</default>
+    </entry>
+    <entry name="focusMetaDisableScreens" type="Bool">
+	    <label>Disable switching on adjacent screens for focus</label>
+        <default>false</default>
+    </entry>
+    <entry name="focusMetaDisableVDesktops" type="Bool">
+	    <label>Disable switching to other virtual desktops for focus</label>
+        <default>false</default>
+    </entry>
+
+
+    <entry name="metaConf" type="String">
 	    <label>Case Insensitive. Redefining the default keybindings in Meta Mode (see the wiki for details)</label>
-      <default>RaiseSurfaceCapacity=ResetSurfaceCapacity&#xD;FocusDown=FocusNext</default>
+      <default></default>
     </entry>
     <entry name="metaTimeout" type="Int">
         <label>Time Duration in milliseconds for Meta Mode</label>

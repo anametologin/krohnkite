@@ -2575,25 +2575,6 @@
           <string>Directional Keys Behaviors</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="1">
-           <widget class="QLabel" name="label_2">
-            <property name="font">
-             <font>
-              <family>Noto Sans</family>
-              <pointsize>14</pointsize>
-              <italic>false</italic>
-              <bold>false</bold>
-              <underline>true</underline>
-             </font>
-            </property>
-            <property name="text">
-             <string>Up</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="0">
            <widget class="QRadioButton" name="kcfg_directionalKeyFocus">
             <property name="sizePolicy">
@@ -2616,6 +2597,113 @@
             <attribute name="buttonGroup">
              <string notr="true">directionalKeyButtonGroup</string>
             </attribute>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_5">
+            <property name="font">
+             <font>
+              <family>Noto Sans</family>
+              <pointsize>14</pointsize>
+              <italic>false</italic>
+              <bold>false</bold>
+              <underline>true</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>Right</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Focus Right</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Focus Prev</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLabel" name="label_4">
+            <property name="font">
+             <font>
+              <family>Noto Sans</family>
+              <pointsize>14</pointsize>
+              <italic>false</italic>
+              <bold>false</bold>
+              <underline>true</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>Left</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_3">
+            <property name="font">
+             <font>
+              <family>Noto Sans</family>
+              <pointsize>14</pointsize>
+              <italic>false</italic>
+              <bold>false</bold>
+              <underline>true</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>Down</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>Adjust Layout</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Focus Left</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Focus Next</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
            </widget>
           </item>
           <item row="1" column="0">
@@ -2642,97 +2730,10 @@
             </attribute>
            </widget>
           </item>
-          <item row="0" column="3">
-           <widget class="QLabel" name="label_4">
-            <property name="font">
-             <font>
-              <family>Noto Sans</family>
-              <pointsize>14</pointsize>
-              <italic>false</italic>
-              <bold>false</bold>
-              <underline>true</underline>
-             </font>
-            </property>
+          <item row="2" column="2">
+           <widget class="QLabel" name="label_10">
             <property name="text">
-             <string>Left</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Focus Next</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_3">
-            <property name="font">
-             <font>
-              <family>Noto Sans</family>
-              <pointsize>14</pointsize>
-              <italic>false</italic>
-              <bold>false</bold>
-              <underline>true</underline>
-             </font>
-            </property>
-            <property name="text">
-             <string>Down</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="4">
-           <widget class="QLabel" name="label_5">
-            <property name="font">
-             <font>
-              <family>Noto Sans</family>
-              <pointsize>14</pointsize>
-              <italic>false</italic>
-              <bold>false</bold>
-              <underline>true</underline>
-             </font>
-            </property>
-            <property name="text">
-             <string>Right</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>Focus Prev</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Adjust Layout</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="4">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Adjust Layout</string>
+             <string>Focus Down</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -2749,34 +2750,278 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="label_10">
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_8">
             <property name="text">
-             <string>Focus Down</string>
+             <string>Adjust Layout</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
-          <item row="2" column="3">
-           <widget class="QLabel" name="label_11">
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_2">
+            <property name="font">
+             <font>
+              <family>Noto Sans</family>
+              <pointsize>14</pointsize>
+              <italic>false</italic>
+              <bold>false</bold>
+              <underline>true</underline>
+             </font>
+            </property>
             <property name="text">
-             <string>Focus Left</string>
+             <string>Up</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
-          <item row="2" column="4">
-           <widget class="QLabel" name="label_12">
-            <property name="text">
-             <string>Focus Right</string>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string>Focus Keys</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_15">
+          <item>
+           <widget class="QGroupBox" name="groupBox_2">
+            <property name="title">
+             <string/>
             </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
+            <property name="flat">
+             <bool>true</bool>
             </property>
+            <layout class="QGridLayout" name="gridLayout_34">
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="6">
+              <spacer name="horizontalSpacer_24">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="0" column="5">
+              <widget class="QComboBox" name="kcfg_focusMeta">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What types of window can be focused using Krohnkite's focus keys in meta Mode. &lt;/p&gt;&lt;p&gt;Meta shortcuts: &lt;span style=&quot; font-weight:700;&quot;&gt;MetaFocusLeft&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;MetaFocusRight&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;MetaFocusUp&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;MetaFocusDown&lt;/span&gt;&lt;/p&gt;&lt;p&gt;These Meta Shortcuts have configured on the same Focus keys. Can be overridden in Krohnkite Meta Mode configuration settings (see wiki).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;Special : focus up - &lt;/span&gt;walk on screens. &lt;span style=&quot; font-weight:700;&quot;&gt;focus down - &lt;/span&gt;walk on all the windows, even those that are not managed and  registered by Krohnkite. &lt;span style=&quot; font-weight:700;&quot;&gt;focus left/right - &lt;/span&gt;walk on Virtual Desktops.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="currentIndex">
+                <number>1</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Tiled+Docked+Float</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Surfaces</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Tiled</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Float</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Docked</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Tiled+Float</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Tiled+Docked</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Float+Docked</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Special</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_62">
+               <property name="text">
+                <string>Normal</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="kcfg_focusNormal">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What types of window can be focused using Krohnkite's focus keys. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;Special : focus up - &lt;/span&gt;walk on screens. &lt;span style=&quot; font-weight:700;&quot;&gt;focus down - &lt;/span&gt;walk on all the windows, even those that are not managed and  registered by Krohnkite. &lt;span style=&quot; font-weight:700;&quot;&gt;focus left/right - &lt;/span&gt;walk on Virtual Desktops.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Tiled+Docked+Float</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Surfaces</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Tiled</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Float</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Docked</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Tiled+Float</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Tiled+Docked</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Float+Docked</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Special</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QLabel" name="label_63">
+               <property name="text">
+                <string>Meta Mode</string>
+               </property>
+               <property name="margin">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <spacer name="horizontalSpacer_26">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Policy::Minimum</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_3">
+            <property name="title">
+             <string/>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_35">
+             <item row="0" column="0">
+              <widget class="QCheckBox" name="kcfg_focusNormalDisableScreens">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Disable focusing across screens</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QCheckBox" name="kcfg_focusMetaDisableVDesktops">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Disable focusing across Vdesktops</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QCheckBox" name="kcfg_focusMetaDisableScreens">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Disable focusing across screens</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QCheckBox" name="kcfg_focusNormalDisableVDesktops">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Disable focusing across Vdesktops</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <spacer name="horizontalSpacer_25">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
@@ -2789,7 +3034,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QPlainTextEdit" name="kcfg_metaConfig">
+           <widget class="QPlainTextEdit" name="kcfg_metaConf">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
               <horstretch>0</horstretch>

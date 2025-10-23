@@ -56,7 +56,7 @@ class ColumnLayout implements ILayout {
     ctx: EngineContext,
     tileables: WindowClass[],
     area: Rect,
-    gap: number
+    gap: number,
   ): void {
     this.renderedWindowsIds = [];
     let columnTileables = tileables.filter((w) => {
@@ -104,7 +104,7 @@ class ColumnLayout implements ILayout {
     tiles: WindowClass[],
     basis: WindowClass,
     delta: RectDelta,
-    gap: number
+    gap: number,
   ) {
     let columnTiles = tiles.filter((t) => this.windowIds.has(t.id));
     this.parts.adjust(area, columnTiles, basis, delta, gap);
@@ -118,12 +118,12 @@ class ColumnLayout implements ILayout {
       [...this.windowIds].filter((id) => {
         window = ctx.getWindowById(id);
         if (ids.has(id)) return true;
-        else if (window !== null && (window.minimized || window.floating)) {
+        else if (window !== null && (window.minimized || window.isFloating)) {
           floatedOrMinimized += 1;
           return true;
         }
         return false;
-      })
+      }),
     );
     this.numberFloatedOrMinimized = floatedOrMinimized;
   }
