@@ -29,9 +29,9 @@ class EngineContext {
     return this.drvctx.cursorPosition;
   }
 
-  public get surfaceParams(): string {
+  public get surfaceParams(): string[] {
     let srf = this.drvctx.currentSurface;
-    return srf.output.name, srf.activity, srf.vDesktop.name;
+    return [srf.output.name, srf.activity, srf.vDesktop.name];
   }
 
   constructor(private drvctx: IDriverContext, private engine: TilingEngine) {}
