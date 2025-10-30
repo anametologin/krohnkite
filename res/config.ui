@@ -4865,7 +4865,7 @@
           <string>All tiled windows will have no borders. Borders will be added back if window become float.</string>
          </property>
          <property name="text">
-          <string>Use separate layouts for each Activity</string>
+          <string>Use separate layouts and window split ratios for each Activity</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -4878,7 +4878,7 @@
           <string>All tiled windows will have no borders. Borders will be added back if window become float.</string>
          </property>
          <property name="text">
-          <string>Use separate layouts for each Desktop</string>
+          <string>Use separate layouts and window split ratios for each Desktop</string>
          </property>
          <property name="checked">
           <bool>true</bool>
