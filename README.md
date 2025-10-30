@@ -216,7 +216,10 @@ Changing the border color makes it easier to identify current window. This is
 convinient if title bars are removed.
 
 1. You can use the Oxygen decoration theme. [Oxygen theme settings][]
-1. You can install third-party decorations, see [Border color conversation][]
+2. You can install third-party decorations, see [Border color conversation][]
+3. You can add to the WM section in $HOME/.config/kdeglobals (this changes the default Breeze decoration frame colors):
+    - `frame=R,G,B`
+    - `inactiveFrame=R,G,B`
 
 [Oxygen theme settings]: https://github.com/anametologin/krohnkite/assets/165245883/51b4cb48-33c7-4627-a119-33d1abbe2b99
 [Border color conversation]: https://github.com/anametologin/krohnkite/issues/15
