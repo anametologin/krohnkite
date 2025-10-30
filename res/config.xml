@@ -507,12 +507,12 @@
     </entry>
 
     <entry name="layoutPerActivity" type="Bool">
-        <label>Use separate layouts per activity.</label>
+        <label>Use separate layouts and window split ratios per activity.</label>
         <default>true</default>
     </entry>
 
     <entry name="layoutPerDesktop" type="Bool">
-        <label>Use separate layouts per desktop.</label>
+        <label>Use separate layouts and window split ratios per desktop.</label>
         <default>true</default>
     </entry>
 
