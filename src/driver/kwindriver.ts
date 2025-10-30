@@ -209,43 +209,208 @@ class KWinDriver implements IDriverContext {
   }
 
   public moveWindowsToScreen(
-    windowsToScreen: [output: Output, windows: WindowClass[]][],
-  ) {
-    let clients: Window[] = [];
-    windowsToScreen.forEach(([targetOutput, windows]) => {
-      windows.forEach((window) => {
-        let client = (window.window as KWinWindow).window;
+    windowsToScreen: [output: Output, windows: WindowClass[]][]
+  ): void {
+    const clients: KWinWindow["window"][] = [];
+
+    for (const [output, windows] of windowsToScreen) {
+      for (const window of windows) {
+        const client = (window.window as KWinWindow).window;
+        try {
+          this.workspace.sendClientToScreen(client, output);
+        } catch (e) {
+          // continue on error
+        }
         clients.push(client);
-        client.minimized = true;
-        this.workspace.sendClientToScreen(client, targetOutput);
-      });
-    });
+      }
+    }
+
     if (clients.length === 0) return;
-    this.setTimeout(() => {
-      clients.forEach((client) => {
-        client.minimized = false;
-      });
-      this.workspace.activeWindow = clients[clients.length - 1];
-      this.control.engine.arrange(this, "moveWindowsToScreen");
-    }, 100);
+
+    const lastClient = clients[clients.length - 1];
+    const interval = 50;
+    const maxWait = 1000;
+    let elapsed = 0;
+
+    const verifyClientOnOutput = (): boolean => {
+      try {
+        const out = (lastClient as any).output;
+        const screen = (lastClient as any).screen;
+        if (out || typeof screen !== "undefined") return true;
+        return false;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const finishActivation = () => {
+      try {
+        for (const client of clients) {
+          if ((client as any).minimized) (client as any).minimized = false;
+          if (typeof (client as any).raise === "function") (client as any).raise();
+          if (typeof (client as any).requestActivate === "function") (client as any).requestActivate();
+        }
+
+        this.workspace.activeWindow = lastClient;
+      } catch (e) {
+        // ignore
+      }
+
+      try {
+        this.control.engine.arrange(this, "moveWindowsToScreen");
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const poll = () => {
+      if (verifyClientOnOutput()) {
+        finishActivation();
+        return;
+      }
+
+      elapsed += interval;
+      if (elapsed >= maxWait) {
+        finishActivation();
+        return;
+      }
+
+      this.setTimeout(poll, interval);
+    };
+
+    this.setTimeout(poll, interval);
   }
 
   public moveToScreen(window: WindowClass, direction: Direction): boolean {
-    let client = (window.window as KWinWindow).window;
-    let output = client.output;
-    let neighbor = KWinDriver.getNeighborOutput(
-      this.workspace,
-      direction,
-      output,
-    );
-    if (neighbor === null || neighbor === undefined) return false;
-    client.minimized = true;
-    this.workspace.sendClientToScreen(client, neighbor);
-    this.setTimeout(() => {
-      client.minimized = false;
-      this.workspace.activeWindow = client;
-      this.control.engine.arrange(this, "moveToScreen");
-    }, 100);
+    const client = (window.window as KWinWindow).window;
+
+    // Find the source Output by using the client's geometry center and matching
+    // it against workspace.screens' geometry.
+    let sourceOutput: Output | null = null;
+    try {
+      const geom = (client as any).geometry;
+      if (geom) {
+        const cx = geom.x + Math.floor((geom.width || geom.w || 0) / 2);
+        const cy = geom.y + Math.floor((geom.height || geom.h || 0) / 2);
+        for (const out of this.workspace.screens) {
+          const og = (out as any).geometry;
+          if (!og) continue;
+          const ox = og.x, oy = og.y;
+          const ow = og.width ?? og.w ?? 0, oh = og.height ?? og.h ?? 0;
+          if (cx >= ox && cx < ox + ow && cy >= oy && cy < oy + oh) {
+            sourceOutput = out;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      // ignore and try fallbacks below
+    }
+
+    // If we couldn't find a source via geometry, try common client properties as fallback.
+    if (!sourceOutput) {
+      const clientOut = (client as any).output;
+      if (clientOut) {
+        // If client.output is actually an Output object from KWin, try to match by name/id.
+        for (const out of this.workspace.screens) {
+          if ((out as any).name && clientOut.name && (out as any).name === clientOut.name) {
+            sourceOutput = out;
+            break;
+          }
+          if ((out as any).id && clientOut.id && (out as any).id === clientOut.id) {
+            sourceOutput = out;
+            break;
+          }
+        }
+      }
+    }
+
+    // If we still don't have a source, give up.
+    if (!sourceOutput) return false;
+
+    // Use the neighbor helper in this file to find the adjacent output.
+    let targetOutput: Output | null = null;
+    try {
+      targetOutput = (this as any).getNeighborOutput
+        ? (this as any).getNeighborOutput.call(this, direction, sourceOutput)
+        : null;
+    } catch (e) {
+      targetOutput = null;
+    }
+
+    // Fallback to any legacy resolver if you have one (optional).
+    if (!targetOutput) {
+      targetOutput = this._getOutputByDirection(direction);
+    }
+    if (!targetOutput) return false;
+
+    // Send the client to the target output.
+    try {
+      this.workspace.sendClientToScreen(client, targetOutput);
+    } catch (e) {
+      // sendClientToScreen may throw on some builds; abort gracefully.
+      return false;
+    }
+
+    // Poll until the client's center is inside the target output geometry,
+    // or until timeout — then finish activation.
+    const interval = 50;
+    const maxWait = 800;
+    let elapsed = 0;
+
+    const clientCenterInTarget = (): boolean => {
+      try {
+        const cgeom = (client as any).geometry;
+        const tgeom = (targetOutput as any).geometry;
+        if (!cgeom || !tgeom) return false;
+        const cx = cgeom.x + Math.floor((cgeom.width || cgeom.w || 0) / 2);
+        const cy = cgeom.y + Math.floor((cgeom.height || cgeom.h || 0) / 2);
+        const tx = tgeom.x, ty = tgeom.y;
+        const tw = tgeom.width ?? tgeom.w ?? 0, th = tgeom.height ?? tgeom.h ?? 0;
+        return cx >= tx && cx < tx + tw && cy >= ty && cy < ty + th;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const finishActivation = () => {
+      try {
+        if ((client as any).minimized) (client as any).minimized = false;
+
+        if (typeof (client as any).raise === "function") (client as any).raise();
+        if (typeof (client as any).requestActivate === "function")
+          (client as any).requestActivate();
+
+        this.workspace.activeWindow = client;
+      } catch (e) {
+        // ignore non-fatal activation errors
+      }
+
+      try {
+        this.control.engine.arrange(this, "moveToScreen");
+      } catch (e) {
+        // ignore arrange errors
+      }
+    };
+
+    const poll = () => {
+      if (clientCenterInTarget()) {
+        finishActivation();
+        return;
+      }
+
+      elapsed += interval;
+      if (elapsed >= maxWait) {
+        // timed out — try to finish anyway
+        finishActivation();
+        return;
+      }
+
+      this.setTimeout(poll, interval);
+    };
+
+    // Start polling after a short initial delay
+    this.setTimeout(poll, interval);
     return true;
   }
 
@@ -1084,8 +1249,7 @@ class KWinDriver implements IDriverContext {
       LOG?.send(
         LogModules.activitiesChanged,
         "eventFired",
-        `window: caption:${client.caption} internalID:${
-          client.internalId
+        `window: caption:${client.caption} internalID:${client.internalId
         }, activities: ${client.activities.join(",")}`,
         { winClass: [`${client.resourceClass}`] },
       );
