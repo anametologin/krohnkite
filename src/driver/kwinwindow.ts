@@ -185,81 +185,45 @@ class KWinWindow implements IDriverWindow {
             this.workspace.currentDesktop,
           ),
         );
-        if (!area.includes(geometry)) {
-          // Allow the window to extend off this output if it intersects any other output.
-          // If no output intersects the target geometry, clamp it inside the current output.
-          let intersectsOtherOutput = false;
-          try {
-            // small threshold to account for fractional/rounded coordinates on scaled outputs
-            const MIN_OVERLAP_PX = 0.5;
-
-            const centerX = geometry.x + geometry.width / 2;
-            const centerY = geometry.y + geometry.height / 2;
-
-            // the window's current output may be an Output object (not an index) or possibly undefined
-            const currentOutput = this.window.output as any | undefined;
-
-            const isSameOutput = (s: any) => {
-              if (!currentOutput) return false; // no current output info, treat as different
-              // try direct object reference equality first
-              if (s === currentOutput) return true;
-              // fallback: compare name/id fields if present
-              if (typeof s.name !== "undefined" && typeof currentOutput.name !== "undefined") {
-                return s.name === currentOutput.name;
-              }
-              if (typeof s.id !== "undefined" && typeof currentOutput.id !== "undefined") {
-                return s.id === currentOutput.id;
-              }
-              // no reliable way to compare, assume not same
-              return false;
-            };
-
-            for (let s of this.workspace.screens) {
-              const srect = toRect(s.geometry);
-
-              // If the center is inside this screen, treat it as intersecting.
-              if (centerX >= srect.x && centerX < srect.maxX && centerY >= srect.y && centerY < srect.maxY) {
-                // If center is on a different screen than the window's current output, we consider it an intersection.
-                if (!isSameOutput(s)) {
-                  intersectsOtherOutput = true;
-                  break;
-                }
-              }
-
-              // Otherwise compute axis overlap (may be fractional). Count as intersection if both axes overlap by at least MIN_OVERLAP_PX.
-              const overlapX = Math.max(0, Math.min(geometry.maxX, srect.maxX) - Math.max(geometry.x, srect.x));
-              const overlapY = Math.max(0, Math.min(geometry.maxY, srect.maxY) - Math.max(geometry.y, srect.y));
-
-              if (overlapX >= MIN_OVERLAP_PX && overlapY >= MIN_OVERLAP_PX) {
-                // If it's the same screen as the window currently sits on, skip; otherwise this is an intersecting output.
-                if (!isSameOutput(s)) {
-                  intersectsOtherOutput = true;
-                  break;
-                }
-              }
-            }
-          } catch (e) {
-            // If we cannot determine outputs for some reason, fall back to clamping.
-            intersectsOtherOutput = false;
-          }
-
-          if (!intersectsOtherOutput) {
-            // clamp on all four sides so window stays inside the usable client area
-            let x = geometry.x;
-            let y = geometry.y;
-
-            // left/top
-            if (x < area.x) x = area.x;
-            if (y < area.y) y = area.y;
-
-            // right/bottom
-            if (x + geometry.width > area.maxX) x = area.maxX - geometry.width;
-            if (y + geometry.height > area.maxY) y = area.maxY - geometry.height;
-
-            geometry = new Rect(x, y, geometry.width, geometry.height);
-            geometry = this.adjustGeometry(geometry);
+        const winOutput = this.window.output;
+        if (
+          geometry.x < area.x &&
+          KWinDriver.getNeighborOutput(this.workspace, "left", winOutput) ===
+            null
+        ) {
+          geometry.x = area.x;
+        }
+        if (
+          geometry.y < area.y &&
+          KWinDriver.getNeighborOutput(this.workspace, "up", winOutput) === null
+        ) {
+          geometry.y = area.y;
+        }
+        if (
+          geometry.maxX > area.maxX &&
+          KWinDriver.getNeighborOutput(this.workspace, "right", winOutput) ===
+            null
+        ) {
+          if (geometry.width > area.width) {
+            geometry.x = area.x;
+            geometry.width = area.width;
+          } else {
+            geometry.x = area.maxX - geometry.width;
           }
         }
+        if (
+          geometry.maxY > area.maxY &&
+          KWinDriver.getNeighborOutput(this.workspace, "down", winOutput) ===
+            null
+        ) {
+          if (geometry.height > area.height) {
+            geometry.y = area.y;
+            geometry.height = area.height;
+          } else {
+            geometry.y = area.maxY - geometry.height;
+          }
+        }
+        geometry = this.adjustGeometry(geometry);
       }
       if (this.window.deleted) return;
       this.window.frameGeometry = toQRect(geometry);
