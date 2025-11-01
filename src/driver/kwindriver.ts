@@ -233,7 +233,11 @@ class KWinDriver implements IDriverContext {
   public moveToScreen(window: WindowClass, direction: Direction): boolean {
     let client = (window.window as KWinWindow).window;
     let output = client.output;
-    let neighbor = this.getNeighborOutput(direction, output);
+    let neighbor = KWinDriver.getNeighborOutput(
+      this.workspace,
+      direction,
+      output,
+    );
     if (neighbor === null || neighbor === undefined) return false;
     client.minimized = true;
     this.workspace.sendClientToScreen(client, neighbor);
@@ -245,7 +249,8 @@ class KWinDriver implements IDriverContext {
     return true;
   }
 
-  private getNeighborOutput(
+  public static getNeighborOutput(
+    workspace: Workspace,
     direction: Direction,
     source: Output,
   ): Output | null {
@@ -263,7 +268,7 @@ class KWinDriver implements IDriverContext {
       }
       return false;
     }
-    for (let target of this.workspace.screens) {
+    for (let target of workspace.screens) {
       if (target === source) continue;
       let targetRect = toRect(target.geometry);
       switch (direction) {
@@ -326,7 +331,8 @@ class KWinDriver implements IDriverContext {
     let targetOutput: Output | null;
 
     while (
-      (targetOutput = this.getNeighborOutput(
+      (targetOutput = KWinDriver.getNeighborOutput(
+        this.workspace,
         oppositeDirection,
         sourceOutput,
       )) !== null
@@ -429,7 +435,8 @@ class KWinDriver implements IDriverContext {
     direction: Direction,
     winTypes: WinTypes,
   ): boolean {
-    let neighbor = this.getNeighborOutput(
+    let neighbor = KWinDriver.getNeighborOutput(
+      this.workspace,
       direction,
       this.workspace.activeScreen,
     );

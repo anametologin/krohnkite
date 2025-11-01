@@ -185,13 +185,45 @@ class KWinWindow implements IDriverWindow {
             this.workspace.currentDesktop,
           ),
         );
-        if (!area.includes(geometry)) {
-          /* assume windows will extrude only through right and bottom edges */
-          const x = geometry.x + Math.min(area.maxX - geometry.maxX, 0);
-          const y = geometry.y + Math.min(area.maxY - geometry.maxY, 0);
-          geometry = new Rect(x, y, geometry.width, geometry.height);
-          geometry = this.adjustGeometry(geometry);
+        const winOutput = this.window.output;
+        if (
+          geometry.x < area.x &&
+          KWinDriver.getNeighborOutput(this.workspace, "left", winOutput) ===
+            null
+        ) {
+          geometry.x = area.x;
         }
+        if (
+          geometry.y < area.y &&
+          KWinDriver.getNeighborOutput(this.workspace, "up", winOutput) === null
+        ) {
+          geometry.y = area.y;
+        }
+        if (
+          geometry.maxX > area.maxX &&
+          KWinDriver.getNeighborOutput(this.workspace, "right", winOutput) ===
+            null
+        ) {
+          if (geometry.width > area.width) {
+            geometry.x = area.x;
+            geometry.width = area.width;
+          } else {
+            geometry.x = area.maxX - geometry.width;
+          }
+        }
+        if (
+          geometry.maxY > area.maxY &&
+          KWinDriver.getNeighborOutput(this.workspace, "down", winOutput) ===
+            null
+        ) {
+          if (geometry.height > area.height) {
+            geometry.y = area.y;
+            geometry.height = area.height;
+          } else {
+            geometry.y = area.maxY - geometry.height;
+          }
+        }
+        geometry = this.adjustGeometry(geometry);
       }
       if (this.window.deleted) return;
       this.window.frameGeometry = toQRect(geometry);
