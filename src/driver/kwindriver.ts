@@ -217,13 +217,6 @@ class KWinDriver implements IDriverContext {
       for (const window of windows) {
         const client = (window.window as KWinWindow).window;
         try {
-          // minimize first if available
-          try {
-            if ((client as any).minimized) (client as any).minimized = true;
-          } catch (e) {
-            /* ignore */
-          }
-
           this.workspace.sendClientToScreen(client, output);
         } catch (e) {
           // continue on error
@@ -241,10 +234,8 @@ class KWinDriver implements IDriverContext {
 
     const verifyClientOnOutput = (): boolean => {
       try {
-        // Prefer explicit output property if available
-        const out = (lastClient as any).output;
-        const screen = (lastClient as any).screen;
-        if (out || typeof screen !== "undefined") return true;
+        const out = lastClient.output;
+        if (out) return true;
 
         return false;
       } catch (e) {
@@ -254,30 +245,7 @@ class KWinDriver implements IDriverContext {
 
     const finishActivation = () => {
       try {
-        for (const client of clients) {
-          try {
-            if ((client as any).minimized) (client as any).minimized = false;
-          } catch (e) {
-            /* ignore */
-          }
-          try {
-            if (typeof (client as any).raise === "function") (client as any).raise();
-          } catch (e) {
-            /* ignore */
-          }
-          try {
-            if (typeof (client as any).requestActivate === "function")
-              (client as any).requestActivate();
-          } catch (e) {
-            /* ignore */
-          }
-        }
-
-        try {
-          this.workspace.activeWindow = lastClient;
-        } catch (e) {
-          /* ignore */
-        }
+        this.workspace.activeWindow = lastClient;
       } catch (e) {
         // ignore
       }
@@ -311,18 +279,14 @@ class KWinDriver implements IDriverContext {
   public moveToScreen(window: WindowClass, direction: Direction): boolean {
     const client = (window.window as KWinWindow).window;
 
-    // Try the client's output property and match by name/id
+    // Try the client's output property and match by name
     let sourceOutput: Output | null = null;
     if (!sourceOutput) {
-      const clientOut = (client as any).output;
+      const clientOut = client.output;
       if (clientOut) {
         for (const out of this.workspace.screens) {
           try {
-            if ((out as any).name && clientOut.name && (out as any).name === clientOut.name) {
-              sourceOutput = out;
-              break;
-            }
-            if ((out as any).id && clientOut.id && (out as any).id === clientOut.id) {
+            if (out.name && clientOut.name && out.name === clientOut.name) {
               sourceOutput = out;
               break;
             }
@@ -346,63 +310,19 @@ class KWinDriver implements IDriverContext {
 
     if (!targetOutput) return false;
 
-    // minimize and send the client to the target output
-    try {
-      if ((client as any).minimized) (client as any).minimized = true;
-    } catch (e) {
-      /* ignore */
-    }
-
     try {
       this.workspace.sendClientToScreen(client, targetOutput);
     } catch (e) {
       return false;
     }
 
-    // Poll until the client's center is inside the target output geometry,
-    // or until timeout — then finish activation.
+    // Poll until timeout — then finish activation.
     const interval = 20;
     const maxWait = 100;
     let elapsed = 0;
 
-    const clientCenterInTarget = (): boolean => {
-      try {
-        const cgeom = (client as any).geometry;
-        const tgeom = (targetOutput as any).geometry;
-        if (!cgeom || !tgeom) return false;
-        const cw = cgeom.width ?? cgeom.w ?? 0;
-        const ch = cgeom.height ?? cgeom.h ?? 0;
-        const cx = cgeom.x + Math.floor(cw / 2);
-        const cy = cgeom.y + Math.floor(ch / 2);
-        const tx = tgeom.x ?? 0;
-        const ty = tgeom.y ?? 0;
-        const tw = tgeom.width ?? tgeom.w ?? 0;
-        const th = tgeom.height ?? tgeom.h ?? 0;
-        return cx >= tx && cx < tx + tw && cy >= ty && cy < ty + th;
-      } catch (e) {
-        return false;
-      }
-    };
 
     const finishActivation = () => {
-      try {
-        if ((client as any).minimized) (client as any).minimized = false;
-      } catch (e) {
-        /* ignore */
-      }
-
-      try {
-        if (typeof (client as any).raise === "function") (client as any).raise();
-      } catch (e) {
-        /* ignore */
-      }
-      try {
-        if (typeof (client as any).requestActivate === "function")
-          (client as any).requestActivate();
-      } catch (e) {
-        /* ignore */
-      }
-
       try {
         this.workspace.activeWindow = client;
       } catch (e) {
@@ -417,14 +337,8 @@ class KWinDriver implements IDriverContext {
     };
 
     const poll = () => {
-      if (clientCenterInTarget()) {
-        finishActivation();
-        return;
-      }
-
       elapsed += interval;
       if (elapsed >= maxWait) {
-        // timed out — try to finish anyway
         finishActivation();
         return;
       }
