@@ -235,8 +235,8 @@ class KWinDriver implements IDriverContext {
     if (clients.length === 0) return;
 
     const lastClient = clients[clients.length - 1];
-    const interval = 50;
-    const maxWait = 1000;
+    const interval = 20;
+    const maxWait = 100;
     let elapsed = 0;
 
     const verifyClientOnOutput = (): boolean => {
@@ -361,8 +361,8 @@ class KWinDriver implements IDriverContext {
 
     // Poll until the client's center is inside the target output geometry,
     // or until timeout — then finish activation.
-    const interval = 50;
-    const maxWait = 800;
+    const interval = 20;
+    const maxWait = 100;
     let elapsed = 0;
 
     const clientCenterInTarget = (): boolean => {
