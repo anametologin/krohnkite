@@ -210,42 +210,230 @@ class KWinDriver implements IDriverContext {
 
   public moveWindowsToScreen(
     windowsToScreen: [output: Output, windows: WindowClass[]][],
-  ) {
-    let clients: Window[] = [];
-    windowsToScreen.forEach(([targetOutput, windows]) => {
-      windows.forEach((window) => {
-        let client = (window.window as KWinWindow).window;
+  ): void {
+    const clients: KWinWindow["window"][] = [];
+
+    for (const [output, windows] of windowsToScreen) {
+      for (const window of windows) {
+        const client = (window.window as KWinWindow).window;
+        try {
+          // minimize first if available
+          try {
+            if ((client as any).minimized) (client as any).minimized = true;
+          } catch (e) {
+            /* ignore */
+          }
+
+          this.workspace.sendClientToScreen(client, output);
+        } catch (e) {
+          // continue on error
+        }
         clients.push(client);
-        client.minimized = true;
-        this.workspace.sendClientToScreen(client, targetOutput);
-      });
-    });
+      }
+    }
+
     if (clients.length === 0) return;
-    this.setTimeout(() => {
-      clients.forEach((client) => {
-        client.minimized = false;
-      });
-      this.workspace.activeWindow = clients[clients.length - 1];
-      this.control.engine.arrange(this, "moveWindowsToScreen");
-    }, 100);
+
+    const lastClient = clients[clients.length - 1];
+    const interval = 50;
+    const maxWait = 1000;
+    let elapsed = 0;
+
+    const verifyClientOnOutput = (): boolean => {
+      try {
+        // Prefer explicit output property if available
+        const out = (lastClient as any).output;
+        const screen = (lastClient as any).screen;
+        if (out || typeof screen !== "undefined") return true;
+
+        return false;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const finishActivation = () => {
+      try {
+        for (const client of clients) {
+          try {
+            if ((client as any).minimized) (client as any).minimized = false;
+          } catch (e) {
+            /* ignore */
+          }
+          try {
+            if (typeof (client as any).raise === "function") (client as any).raise();
+          } catch (e) {
+            /* ignore */
+          }
+          try {
+            if (typeof (client as any).requestActivate === "function")
+              (client as any).requestActivate();
+          } catch (e) {
+            /* ignore */
+          }
+        }
+
+        try {
+          this.workspace.activeWindow = lastClient;
+        } catch (e) {
+          /* ignore */
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      try {
+        this.control.engine.arrange(this, "moveWindowsToScreen");
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const poll = () => {
+      if (verifyClientOnOutput()) {
+        finishActivation();
+        return;
+      }
+
+      elapsed += interval;
+      if (elapsed >= maxWait) {
+        finishActivation();
+        return;
+      }
+
+      this.setTimeout(poll, interval);
+    };
+
+    // Start polling after issuing the sends
+    this.setTimeout(poll, interval);
   }
 
   public moveToScreen(window: WindowClass, direction: Direction): boolean {
-    let client = (window.window as KWinWindow).window;
-    let output = client.output;
-    let neighbor = KWinDriver.getNeighborOutput(
-      this.workspace,
-      direction,
-      output,
-    );
-    if (neighbor === null || neighbor === undefined) return false;
-    client.minimized = true;
-    this.workspace.sendClientToScreen(client, neighbor);
-    this.setTimeout(() => {
-      client.minimized = false;
-      this.workspace.activeWindow = client;
-      this.control.engine.arrange(this, "moveToScreen");
-    }, 100);
+    const client = (window.window as KWinWindow).window;
+
+    // Try the client's output property and match by name/id
+    let sourceOutput: Output | null = null;
+    if (!sourceOutput) {
+      const clientOut = (client as any).output;
+      if (clientOut) {
+        for (const out of this.workspace.screens) {
+          try {
+            if ((out as any).name && clientOut.name && (out as any).name === clientOut.name) {
+              sourceOutput = out;
+              break;
+            }
+            if ((out as any).id && clientOut.id && (out as any).id === clientOut.id) {
+              sourceOutput = out;
+              break;
+            }
+          } catch (e) {
+            /* ignore per-output errors */
+          }
+        }
+      }
+    }
+
+    // If we don't have a source, give up.
+    if (!sourceOutput) return false;
+
+    // Find the adjacent output.
+    let targetOutput: Output | null = null;
+    try {
+      targetOutput = KWinDriver.getNeighborOutput(this.workspace, direction, sourceOutput);
+    } catch (e) {
+      targetOutput = null;
+    }
+
+    if (!targetOutput) return false;
+
+    // minimize and send the client to the target output
+    try {
+      if ((client as any).minimized) (client as any).minimized = true;
+    } catch (e) {
+      /* ignore */
+    }
+
+    try {
+      this.workspace.sendClientToScreen(client, targetOutput);
+    } catch (e) {
+      return false;
+    }
+
+    // Poll until the client's center is inside the target output geometry,
+    // or until timeout — then finish activation.
+    const interval = 50;
+    const maxWait = 800;
+    let elapsed = 0;
+
+    const clientCenterInTarget = (): boolean => {
+      try {
+        const cgeom = (client as any).geometry;
+        const tgeom = (targetOutput as any).geometry;
+        if (!cgeom || !tgeom) return false;
+        const cw = cgeom.width ?? cgeom.w ?? 0;
+        const ch = cgeom.height ?? cgeom.h ?? 0;
+        const cx = cgeom.x + Math.floor(cw / 2);
+        const cy = cgeom.y + Math.floor(ch / 2);
+        const tx = tgeom.x ?? 0;
+        const ty = tgeom.y ?? 0;
+        const tw = tgeom.width ?? tgeom.w ?? 0;
+        const th = tgeom.height ?? tgeom.h ?? 0;
+        return cx >= tx && cx < tx + tw && cy >= ty && cy < ty + th;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const finishActivation = () => {
+      try {
+        if ((client as any).minimized) (client as any).minimized = false;
+      } catch (e) {
+        /* ignore */
+      }
+
+      try {
+        if (typeof (client as any).raise === "function") (client as any).raise();
+      } catch (e) {
+        /* ignore */
+      }
+      try {
+        if (typeof (client as any).requestActivate === "function")
+          (client as any).requestActivate();
+      } catch (e) {
+        /* ignore */
+      }
+
+      try {
+        this.workspace.activeWindow = client;
+      } catch (e) {
+        /* ignore */
+      }
+
+      try {
+        this.control.engine.arrange(this, "moveToScreen");
+      } catch (e) {
+        /* ignore */
+      }
+    };
+
+    const poll = () => {
+      if (clientCenterInTarget()) {
+        finishActivation();
+        return;
+      }
+
+      elapsed += interval;
+      if (elapsed >= maxWait) {
+        // timed out — try to finish anyway
+        finishActivation();
+        return;
+      }
+
+      this.setTimeout(poll, interval);
+    };
+
+    // Start polling after a short initial delay
+    this.setTimeout(poll, interval);
     return true;
   }
 
@@ -1084,8 +1272,7 @@ class KWinDriver implements IDriverContext {
       LOG?.send(
         LogModules.activitiesChanged,
         "eventFired",
-        `window: caption:${client.caption} internalID:${
-          client.internalId
+        `window: caption:${client.caption} internalID:${client.internalId
         }, activities: ${client.activities.join(",")}`,
         { winClass: [`${client.resourceClass}`] },
       );
