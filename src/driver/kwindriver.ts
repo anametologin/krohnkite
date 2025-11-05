@@ -316,6 +316,25 @@ class KWinDriver implements IDriverContext {
       return false;
     }
 
+    const clientCenterInTarget = (): boolean => {
+      try {
+        const cgeom = client.clientGeometry;
+        const tgeom = targetOutput.geometry;
+        if (!cgeom || !tgeom) return false;
+        const cw = cgeom.width ?? 0;
+        const ch = cgeom.height ?? 0;
+        const cx = cgeom.x + Math.floor(cw / 2);
+        const cy = cgeom.y + Math.floor(ch / 2);
+        const tx = tgeom.x ?? 0;
+        const ty = tgeom.y ?? 0;
+        const tw = tgeom.width ?? 0;
+        const th = tgeom.height ?? 0;
+        return cx >= tx && cx < tx + tw && cy >= ty && cy < ty + th;
+      } catch (e) {
+        return false;
+      }
+    };
+
     // Poll until timeout — then finish activation.
     const interval = 20;
     const maxWait = 100;
@@ -337,6 +356,10 @@ class KWinDriver implements IDriverContext {
     };
 
     const poll = () => {
+      if (clientCenterInTarget()) {
+        finishActivation();
+        return;
+      }
       elapsed += interval;
       if (elapsed >= maxWait) {
         finishActivation();
