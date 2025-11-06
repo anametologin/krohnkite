@@ -337,7 +337,7 @@ class KWinDriver implements IDriverContext {
     };
 
     const poll = () => {
-      if (client.output === targetOutput){
+      if (client.output === targetOutput) {
         finishActivation();
         return;
       }
@@ -832,65 +832,54 @@ class KWinDriver implements IDriverContext {
   private getNeighborVirtualDesktop(
     direction: Direction,
   ): VirtualDesktop | null {
-    let currentVDesktop = this.workspace.currentDesktop;
-    let vDesktops = this.workspace.desktops;
-    let netSize = this.workspace.desktopGridSize;
-    function getVDesktopPosition(idx: number): Position {
-      idx++;
-      switch (direction) {
-        case "left":
-        case "right": {
-          if (
-            netSize.width === 1 ||
-            (idx === vDesktops.length && idx % netSize.width === 1)
-          )
-            return "single";
-          if (idx === vDesktops.length) return "right";
-          let pos_number = idx % netSize.width;
-          if (pos_number === 0) {
-            return "right";
-          } else if (pos_number === 1) {
-            return "left";
-          } else return "middle";
-        }
-        case "up":
-        case "down": {
-          if (netSize.height === 1) return "single";
-          if (idx + netSize.width > vDesktops.length) return "bottom";
-          let floor =
-            Math.floor(idx / netSize.height) +
-            Number(Boolean(idx / netSize.height));
-          if (floor === 1) {
-            return "upper";
-          } else if (floor === netSize.height) return "bottom";
-          else return "middle";
-        }
+    const currentVDesktop = this.workspace.currentDesktop;
+    const vDesktops = this.workspace.desktops;
+    const netSize = this.workspace.desktopGridSize;
+
+    if (!currentVDesktop) return null;
+
+    const total = vDesktops.length;
+    const width = netSize.width;
+    const height = netSize.height;
+
+    // Find index of current desktop (0-based)
+    const idx = vDesktops.indexOf(currentVDesktop);
+    if (idx < 0) return null;
+
+    // If width or height is 1, that axis has no neighbors.
+    if ((direction === "left" || direction === "right") && width === 1)
+      return null;
+    if ((direction === "up" || direction === "down") && height === 1)
+      return null;
+
+    if (direction === "left" || direction === "right") {
+      // column: 1..width
+      const col = (idx % width) + 1;
+      if (direction === "left") {
+        // already at leftmost column?
+        if (col === 1) return null;
+        // neighbor is previous desktop in array
+        return vDesktops[idx - 1] ?? null;
+      } else {
+        // right
+        if (col === width) return null;
+        // neighbor is next desktop in array (ensure within total)
+        return idx + 1 < total ? vDesktops[idx + 1] : null;
+      }
+    } else {
+      // up / down: compute row (1..height)
+      const row = Math.ceil((idx + 1) / width);
+      if (direction === "up") {
+        if (row === 1) return null;
+        const neighborIdx = idx - width;
+        return neighborIdx >= 0 ? vDesktops[neighborIdx] : null;
+      } else {
+        // down
+        if (row === height) return null;
+        const neighborIdx = idx + width;
+        return neighborIdx < total ? vDesktops[neighborIdx] : null;
       }
     }
-    for (let i = 0; i < vDesktops.length; i++) {
-      let vDesktop = vDesktops[i];
-      if (vDesktop !== currentVDesktop) continue;
-      let position = getVDesktopPosition(i);
-      switch (direction) {
-        case "left": {
-          if (position === "left" || position === "single") return null;
-          else return vDesktops[i - 1];
-        }
-        case "right": {
-          if (position === "right" || position === "single") return null;
-          else return vDesktops[i + 1];
-        }
-        case "up": {
-          if (position === "upper" || position === "single") return null;
-          else return vDesktops[i - netSize.width];
-        }
-        case "down": {
-          if (position === "bottom" || position === "single") return null;
-          else return vDesktops[i + netSize.width];
-        }
-      }
-    }
-    return null;
   }
 
   private bindShortcut() {
