@@ -210,42 +210,148 @@ class KWinDriver implements IDriverContext {
 
   public moveWindowsToScreen(
     windowsToScreen: [output: Output, windows: WindowClass[]][],
-  ) {
-    let clients: Window[] = [];
-    windowsToScreen.forEach(([targetOutput, windows]) => {
-      windows.forEach((window) => {
-        let client = (window.window as KWinWindow).window;
+  ): void {
+    const clients: KWinWindow["window"][] = [];
+
+    for (const [output, windows] of windowsToScreen) {
+      for (const window of windows) {
+        const client = (window.window as KWinWindow).window;
+        try {
+          this.workspace.sendClientToScreen(client, output);
+        } catch (e) {
+          // continue on error
+        }
         clients.push(client);
-        client.minimized = true;
-        this.workspace.sendClientToScreen(client, targetOutput);
-      });
-    });
+      }
+    }
+
     if (clients.length === 0) return;
-    this.setTimeout(() => {
-      clients.forEach((client) => {
-        client.minimized = false;
-      });
-      this.workspace.activeWindow = clients[clients.length - 1];
-      this.control.engine.arrange(this, "moveWindowsToScreen");
-    }, 100);
+
+    const lastClient = clients[clients.length - 1];
+    const interval = 20;
+    const maxWait = 100;
+    let elapsed = 0;
+
+    const verifyClientOnOutput = (): boolean => {
+      try {
+        const out = lastClient.output;
+        if (out) return true;
+
+        return false;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const finishActivation = () => {
+      try {
+        this.workspace.activeWindow = lastClient;
+      } catch (e) {
+        // ignore
+      }
+
+      try {
+        this.control.engine.arrange(this, "moveWindowsToScreen");
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const poll = () => {
+      if (verifyClientOnOutput()) {
+        finishActivation();
+        return;
+      }
+
+      elapsed += interval;
+      if (elapsed >= maxWait) {
+        finishActivation();
+        return;
+      }
+
+      this.setTimeout(poll, interval);
+    };
+
+    // Start polling after issuing the sends
+    this.setTimeout(poll, interval);
   }
 
   public moveToScreen(window: WindowClass, direction: Direction): boolean {
-    let client = (window.window as KWinWindow).window;
-    let output = client.output;
-    let neighbor = KWinDriver.getNeighborOutput(
-      this.workspace,
-      direction,
-      output,
-    );
-    if (neighbor === null || neighbor === undefined) return false;
-    client.minimized = true;
-    this.workspace.sendClientToScreen(client, neighbor);
-    this.setTimeout(() => {
-      client.minimized = false;
-      this.workspace.activeWindow = client;
-      this.control.engine.arrange(this, "moveToScreen");
-    }, 100);
+    const client = (window.window as KWinWindow).window;
+
+    // Try the client's output property and match by name
+    let sourceOutput: Output | null = null;
+    if (!sourceOutput) {
+      const clientOut = client.output;
+      if (clientOut) {
+        for (const out of this.workspace.screens) {
+          try {
+            if (out.name && clientOut.name && out.name === clientOut.name) {
+              sourceOutput = out;
+              break;
+            }
+          } catch (e) {
+            /* ignore per-output errors */
+          }
+        }
+      }
+    }
+
+    // If we don't have a source, give up.
+    if (!sourceOutput) return false;
+
+    // Find the adjacent output.
+    let targetOutput: Output | null = null;
+    try {
+      targetOutput = KWinDriver.getNeighborOutput(this.workspace, direction, sourceOutput);
+    } catch (e) {
+      targetOutput = null;
+    }
+
+    if (!targetOutput) return false;
+
+    try {
+      this.workspace.sendClientToScreen(client, targetOutput);
+    } catch (e) {
+      return false;
+    }
+
+    // Poll until timeout — then finish activation.
+    const interval = 20;
+    const maxWait = 100;
+    let elapsed = 0;
+
+
+    const finishActivation = () => {
+      try {
+        this.workspace.activeWindow = client;
+      } catch (e) {
+        /* ignore */
+      }
+
+      try {
+        this.control.engine.arrange(this, "moveToScreen");
+      } catch (e) {
+        /* ignore */
+      }
+    };
+
+    const poll = () => {
+      if (client.output === targetOutput){
+        finishActivation();
+        return;
+      }
+      elapsed += interval;
+      if (elapsed >= maxWait) {
+        finishActivation();
+        return;
+      }
+
+      this.setTimeout(poll, interval);
+    };
+
+    // Start polling after a short initial delay
+    this.setTimeout(poll, interval);
     return true;
   }
 
@@ -1084,8 +1190,7 @@ class KWinDriver implements IDriverContext {
       LOG?.send(
         LogModules.activitiesChanged,
         "eventFired",
-        `window: caption:${client.caption} internalID:${
-          client.internalId
+        `window: caption:${client.caption} internalID:${client.internalId
         }, activities: ${client.activities.join(",")}`,
         { winClass: [`${client.resourceClass}`] },
       );
