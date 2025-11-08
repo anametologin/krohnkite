@@ -162,6 +162,198 @@ class KWinDriver implements IDriverContext {
     return null;
   }
 
+  public focusNeighborWindow(
+    direction: Direction,
+    winTypes: WinTypes,
+  ): Window | null | boolean {
+    let window = this.workspace.activeWindow;
+    if (!window) return null;
+    let windows = this._getWindowsByDirection(
+      winTypes,
+      this.currentSurface,
+      toRect(window.frameGeometry),
+      direction,
+    );
+    if (windows.length === 0) return null;
+    let idx = windows.indexOf(window);
+    if (idx < 0) {
+      this.workspace.activeWindow = windows[0];
+      return true;
+    }
+    if (windows.length === 1) return window;
+
+    if (
+      this._setFocusOnSurface(
+        window,
+        this.currentSurface,
+        direction,
+        winTypes,
+        windows,
+      )
+    )
+      return true;
+
+    return window;
+  }
+
+  public focusOutput(
+    window: Window | null,
+    direction: Direction,
+    winTypes: WinTypes,
+  ): boolean {
+    let neighbor = KWinDriver.getNeighborOutput(
+      this.workspace,
+      direction,
+      this.workspace.activeScreen,
+    );
+    if (neighbor === null) return false;
+    let neighbor_surface = this._surfaceStore.getSurface(
+      neighbor,
+      this.workspace.currentActivity,
+      this.workspace.currentDesktop,
+    );
+    if (!this._setFocusOnSurface(window, neighbor_surface, direction, winTypes))
+      this._makeActiveScreen(neighbor_surface.output);
+
+    return true;
+  }
+
+  public focusSpecial(direction: Direction) {
+    switch (direction) {
+      case "up": {
+        let screens = this.workspace.screens;
+        if (screens.length === 1) return true;
+        let output = this.workspace.activeScreen;
+        let idx = screens.indexOf(output);
+        if (idx < 0) {
+          warning(`kwindriver: focusNeighborWindow: screen doesn't found.`);
+          return;
+        }
+        idx = idx < screens.length - 1 ? idx + 1 : 0;
+        this._makeActiveScreen(screens[idx]);
+        return;
+      }
+      case "down": {
+        let window = this.workspace.activeWindow;
+        if (!window) return;
+        let windows = this._getWindowsByDirection(
+          WinTypes.special,
+          this.currentSurface,
+          toRect(window.frameGeometry),
+          direction,
+        );
+        let idx = windows.indexOf(window);
+        if (idx < 0) {
+          this.workspace.activeWindow = windows[0];
+          return;
+        }
+        if (windows.length === 1) return;
+        idx = idx < windows.length - 1 ? idx + 1 : 0;
+        this.workspace.activeWindow = windows[idx];
+        return;
+      }
+      case "right":
+      case "left": {
+        let desktops = this.workspace.desktops;
+        if (desktops.length === 1) return true;
+        let currentDesktop = this.workspace.currentDesktop;
+        let idx = desktops.indexOf(currentDesktop);
+        if (idx < 0) {
+          warning(`kwindriver: focusNeighborWindow: vDesktop doesn't found.`);
+          return;
+        }
+        if (direction === "left") {
+          idx = idx > 0 ? idx - 1 : desktops.length - 1;
+        } else {
+          idx = idx < desktops.length - 1 ? idx + 1 : 0;
+        }
+        this.workspace.currentDesktop = desktops[idx];
+        return;
+      }
+    }
+  }
+
+  public focusVDesktop(
+    window: Window | null,
+    direction: Direction,
+    winTypes: WinTypes,
+  ): void {
+    let neighbor = this._getNeighborVirtualDesktop(direction);
+    let neighbor_surface: ISurface;
+    if (neighbor === null) return;
+    this.workspace.currentDesktop = neighbor;
+    let output = this._getOutputByDirection(direction);
+    if (output !== null) {
+      neighbor_surface = this._surfaceStore.getSurface(
+        output,
+        this.workspace.currentActivity,
+        neighbor,
+      );
+    } else {
+      neighbor_surface = this._surfaceStore.getSurface(
+        this.workspace.activeScreen,
+        this.workspace.currentActivity,
+        neighbor,
+      );
+    }
+    this._setFocusOnSurface(window, neighbor_surface, direction, winTypes);
+  }
+
+  public static getNeighborOutput(
+    workspace: Workspace,
+    direction: Direction,
+    source: Output,
+  ): Output | null {
+    let retOutput = null;
+    let intersection = 0;
+    let sourceRect = toRect(source.geometry);
+    function isOutputCandidate(
+      targetRect: Rect,
+      coordinate: "x" | "y",
+    ): boolean {
+      let currentIntersection = sourceRect.intersection(targetRect, coordinate);
+      if (currentIntersection > intersection) {
+        intersection = currentIntersection;
+        return true;
+      }
+      return false;
+    }
+    for (let target of workspace.screens) {
+      if (target === source) continue;
+      let targetRect = toRect(target.geometry);
+      switch (direction) {
+        case "left": {
+          if (sourceRect.x === targetRect.maxX) {
+            if (isOutputCandidate(targetRect, "y")) retOutput = target;
+          }
+          break;
+        }
+        case "right": {
+          if (sourceRect.maxX === targetRect.x) {
+            if (isOutputCandidate(targetRect, "y")) retOutput = target;
+          }
+          break;
+        }
+        case "up": {
+          if (sourceRect.y === targetRect.maxY) {
+            if (isOutputCandidate(targetRect, "x")) retOutput = target;
+          }
+          break;
+        }
+        case "down": {
+          if (sourceRect.maxY === targetRect.y) {
+            if (isOutputCandidate(targetRect, "x")) retOutput = target;
+          }
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    }
+    return retOutput;
+  }
+
   public setTimeout(func: () => void, timeout: number) {
     KWinSetTimeout(() => this.enter(func), timeout);
   }
@@ -303,7 +495,11 @@ class KWinDriver implements IDriverContext {
     // Find the adjacent output.
     let targetOutput: Output | null = null;
     try {
-      targetOutput = KWinDriver.getNeighborOutput(this.workspace, direction, sourceOutput);
+      targetOutput = KWinDriver.getNeighborOutput(
+        this.workspace,
+        direction,
+        sourceOutput,
+      );
     } catch (e) {
       targetOutput = null;
     }
@@ -320,7 +516,6 @@ class KWinDriver implements IDriverContext {
     const interval = 20;
     const maxWait = 100;
     let elapsed = 0;
-
 
     const finishActivation = () => {
       try {
@@ -355,67 +550,12 @@ class KWinDriver implements IDriverContext {
     return true;
   }
 
-  public static getNeighborOutput(
-    workspace: Workspace,
-    direction: Direction,
-    source: Output,
-  ): Output | null {
-    let retOutput = null;
-    let intersection = 0;
-    let sourceRect = toRect(source.geometry);
-    function isOutputCandidate(
-      targetRect: Rect,
-      coordinate: "x" | "y",
-    ): boolean {
-      let currentIntersection = sourceRect.intersection(targetRect, coordinate);
-      if (currentIntersection > intersection) {
-        intersection = currentIntersection;
-        return true;
-      }
-      return false;
-    }
-    for (let target of workspace.screens) {
-      if (target === source) continue;
-      let targetRect = toRect(target.geometry);
-      switch (direction) {
-        case "left": {
-          if (sourceRect.x === targetRect.maxX) {
-            if (isOutputCandidate(targetRect, "y")) retOutput = target;
-          }
-          break;
-        }
-        case "right": {
-          if (sourceRect.maxX === targetRect.x) {
-            if (isOutputCandidate(targetRect, "y")) retOutput = target;
-          }
-          break;
-        }
-        case "up": {
-          if (sourceRect.y === targetRect.maxY) {
-            if (isOutputCandidate(targetRect, "x")) retOutput = target;
-          }
-          break;
-        }
-        case "down": {
-          if (sourceRect.maxY === targetRect.y) {
-            if (isOutputCandidate(targetRect, "x")) retOutput = target;
-          }
-          break;
-        }
-        default: {
-          break;
-        }
-      }
-    }
-    return retOutput;
-  }
-
   public moveToVDesktop(
     window: WindowClass,
     direction: Direction,
     across = true,
   ): boolean {
-    let targetVDesktop = this.getNeighborVirtualDesktop(direction);
+    let targetVDesktop = this._getNeighborVirtualDesktop(direction);
     if (targetVDesktop === null) return false;
     let client = (window.window as KWinWindow).window;
     this.workspace.currentDesktop = targetVDesktop;
@@ -430,6 +570,7 @@ class KWinDriver implements IDriverContext {
     }
     return true;
   }
+
   private _getOutputByDirection(direction: Direction): Output | null {
     let oppositeDirection = getOppositeDirection(direction);
     let currentOutput = this.workspace.activeScreen;
@@ -446,142 +587,6 @@ class KWinDriver implements IDriverContext {
       sourceOutput = targetOutput;
     }
     return sourceOutput !== currentOutput ? sourceOutput : null;
-  }
-
-  public focusSpecial(direction: Direction) {
-    switch (direction) {
-      case "up": {
-        let screens = this.workspace.screens;
-        if (screens.length === 1) return true;
-        let output = this.workspace.activeScreen;
-        let idx = screens.indexOf(output);
-        if (idx < 0) {
-          warning(`kwindriver: focusNeighborWindow: screen doesn't found.`);
-          return;
-        }
-        idx = idx < screens.length - 1 ? idx + 1 : 0;
-        this.makeActiveScreen(screens[idx]);
-        return;
-      }
-      case "down": {
-        let window = this.workspace.activeWindow;
-        if (!window) return;
-        let windows = this._getWindowsByDirection(
-          WinTypes.special,
-          this.currentSurface,
-          toRect(window.frameGeometry),
-          direction,
-        );
-        let idx = windows.indexOf(window);
-        if (idx < 0) {
-          this.workspace.activeWindow = windows[0];
-          return;
-        }
-        if (windows.length === 1) return;
-        idx = idx < windows.length - 1 ? idx + 1 : 0;
-        this.workspace.activeWindow = windows[idx];
-        return;
-      }
-      case "right":
-      case "left": {
-        let desktops = this.workspace.desktops;
-        if (desktops.length === 1) return true;
-        let currentDesktop = this.workspace.currentDesktop;
-        let idx = desktops.indexOf(currentDesktop);
-        if (idx < 0) {
-          warning(`kwindriver: focusNeighborWindow: vDesktop doesn't found.`);
-          return;
-        }
-        if (direction === "left") {
-          idx = idx > 0 ? idx - 1 : desktops.length - 1;
-        } else {
-          idx = idx < desktops.length - 1 ? idx + 1 : 0;
-        }
-        this.workspace.currentDesktop = desktops[idx];
-        return;
-      }
-    }
-  }
-  public focusNeighborWindow(
-    direction: Direction,
-    winTypes: WinTypes,
-  ): Window | null | boolean {
-    let window = this.workspace.activeWindow;
-    if (!window) return null;
-    let windows = this._getWindowsByDirection(
-      winTypes,
-      this.currentSurface,
-      toRect(window.frameGeometry),
-      direction,
-    );
-    if (windows.length === 0) return null;
-    let idx = windows.indexOf(window);
-    if (idx < 0) {
-      this.workspace.activeWindow = windows[0];
-      return true;
-    }
-    if (windows.length === 1) return window;
-
-    if (
-      this._setFocusOnSurface(
-        window,
-        this.currentSurface,
-        direction,
-        winTypes,
-        windows,
-      )
-    )
-      return true;
-
-    return window;
-  }
-
-  public focusOutput(
-    window: Window | null,
-    direction: Direction,
-    winTypes: WinTypes,
-  ): boolean {
-    let neighbor = KWinDriver.getNeighborOutput(
-      this.workspace,
-      direction,
-      this.workspace.activeScreen,
-    );
-    if (neighbor === null) return false;
-    let neighbor_surface = this._surfaceStore.getSurface(
-      neighbor,
-      this.workspace.currentActivity,
-      this.workspace.currentDesktop,
-    );
-    if (!this._setFocusOnSurface(window, neighbor_surface, direction, winTypes))
-      this.makeActiveScreen(neighbor_surface.output);
-
-    return true;
-  }
-
-  public focusVDesktop(
-    window: Window | null,
-    direction: Direction,
-    winTypes: WinTypes,
-  ): void {
-    let neighbor = this.getNeighborVirtualDesktop(direction);
-    let neighbor_surface: ISurface;
-    if (neighbor === null) return;
-    this.workspace.currentDesktop = neighbor;
-    let output = this._getOutputByDirection(direction);
-    if (output !== null) {
-      neighbor_surface = this._surfaceStore.getSurface(
-        output,
-        this.workspace.currentActivity,
-        neighbor,
-      );
-    } else {
-      neighbor_surface = this._surfaceStore.getSurface(
-        this.workspace.activeScreen,
-        this.workspace.currentActivity,
-        neighbor,
-      );
-    }
-    this._setFocusOnSurface(window, neighbor_surface, direction, winTypes);
   }
 
   private _setFocusOnSurface(
@@ -829,7 +834,7 @@ class KWinDriver implements IDriverContext {
     return windows;
   }
 
-  private getNeighborVirtualDesktop(
+  private _getNeighborVirtualDesktop(
     direction: Direction,
   ): VirtualDesktop | null {
     const currentVDesktop = this.workspace.currentDesktop;
@@ -878,6 +883,16 @@ class KWinDriver implements IDriverContext {
         if (row === height) return null;
         const neighborIdx = idx + width;
         return neighborIdx < total ? vDesktops[neighborIdx] : null;
+      }
+    }
+  }
+
+  private _makeActiveScreen(output: Output) {
+    for (let win of this.workspace.stackingOrder) {
+      if (win.resourceClass === "plasmashell" && win.output === output) {
+        this.workspace.activeWindow = win;
+        this.showNotification("Active screen");
+        break;
       }
     }
   }
@@ -1021,17 +1036,6 @@ class KWinDriver implements IDriverContext {
     this.shortcuts
       .getBTreeLayout()
       .activated.connect(callbackShortcutLayout(BinaryTreeLayout));
-  }
-
-  private makeActiveScreen(output: Output) {
-    let plasmaShell: Window | null = null;
-    for (let win of this.workspace.stackingOrder) {
-      if (win.resourceClass === "plasmashell" && win.output === output) {
-        this.workspace.activeWindow = win;
-        this.showNotification("Active screen");
-        break;
-      }
-    }
   }
 
   /**
@@ -1179,7 +1183,8 @@ class KWinDriver implements IDriverContext {
       LOG?.send(
         LogModules.activitiesChanged,
         "eventFired",
-        `window: caption:${client.caption} internalID:${client.internalId
+        `window: caption:${client.caption} internalID:${
+          client.internalId
         }, activities: ${client.activities.join(",")}`,
         { winClass: [`${client.resourceClass}`] },
       );
@@ -1309,10 +1314,4 @@ class KWinDriver implements IDriverContext {
       });
     }
   }
-
-  // TODO: private onConfigChanged = () => {
-  //     this.loadConfig();
-  //     this.engine.arrange();
-  // }
-  /* NOTE: check `bindEvents` for details */
 }
