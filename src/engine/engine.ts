@@ -268,7 +268,7 @@ class TilingEngine {
     }
 
     screensData.forEach((screenData: ScreenData) => {
-      this.arrangeScreen(ctx, screenData);
+      this.arrangeScreen(ctx, screenData, reason);
     });
   }
 
@@ -343,7 +343,11 @@ class TilingEngine {
   /**
    * Arrange tiles on a screen.
    */
-  public arrangeScreen(ctx: IDriverContext, screenData: ScreenData) {
+  public arrangeScreen(
+    ctx: IDriverContext,
+    screenData: ScreenData,
+    reason: string,
+  ) {
     LOG?.send(
       LogModules.arrangeScreen,
       "arrangeScreen",
@@ -417,7 +421,10 @@ class TilingEngine {
         return numberOfTiles;
       }
       layoutApply();
-      if (CONFIG.unfitGreater || CONFIG.unfitLess) {
+      if (
+        (CONFIG.unfitGreater || CONFIG.unfitLess) &&
+        ["onWindowResize", "onWindowResizeOver"].indexOf(reason) < 0
+      ) {
         let unfitGreaterQuantity = 0;
         screenData.tileables = screenData.tileables.filter((tile) => {
           if (
