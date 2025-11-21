@@ -13,7 +13,7 @@ interface KWin {
     name: string,
     desc: string,
     key: string,
-    callback: Function
+    callback: Function,
   ): void;
   callDBus(
     service: string,

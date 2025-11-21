@@ -15,11 +15,25 @@ class ColumnLayout implements ILayout {
   public renderedWindowsRects: Array<Rect>;
   public weight: number;
   public timestamp: number;
+  private _minSize: ISize | null;
   private parts: RotateLayoutPart<StackLayoutPart>;
   private numberFloatedOrMinimized: number;
 
   public get description(): string {
     return "Column";
+  }
+
+  public get minSize(): ISize {
+    return this._minSize === null ? { width: 0, height: 0 } : this._minSize;
+  }
+
+  private set minSize(size: ISize | null) {
+    if (size === null) this._minSize = null;
+    else if (this._minSize !== null) {
+      if (this._minSize.width < size.width) this._minSize.width = size.width;
+      if (this._minSize.height < size.height)
+        this._minSize.height = size.height;
+    } else this._minSize = { ...size };
   }
 
   public toString(): string {
@@ -37,6 +51,7 @@ class ColumnLayout implements ILayout {
     this.renderedWindowsRects = [];
     this.numberFloatedOrMinimized = 0;
     this.timestamp = 0;
+    this._minSize = null;
   }
 
   public get size(): number {
@@ -109,16 +124,22 @@ class ColumnLayout implements ILayout {
     let columnTiles = tiles.filter((t) => this.windowIds.has(t.id));
     this.parts.adjust(area, columnTiles, basis, delta, gap);
   }
+  public actualizeMinSize(ctx: EngineContext) {
+    this.windowIds.forEach((id) => {});
+  }
 
   public actualizeWindowIds(ctx: EngineContext, ids: Set<string>) {
     let window: WindowClass | null;
     let floatedOrMinimized: number = 0;
+    this.minSize = null;
     // Sets intersection
     this.windowIds = new Set(
       [...this.windowIds].filter((id) => {
         window = ctx.getWindowById(id);
-        if (ids.has(id)) return true;
-        else if (window !== null && (window.minimized || window.isFloating)) {
+        if (ids.has(id) && window !== null) {
+          this.minSize = window.minSize;
+          return true;
+        } else if (window !== null && (window.minimized || window.isFloating)) {
           floatedOrMinimized += 1;
           return true;
         }

@@ -16,7 +16,7 @@ class LayoutUtils {
   public static splitWeighted(
     [begin, length]: [number, number],
     weights: number[],
-    gap: number
+    gap: number,
   ): Array<[number, number]> {
     gap = gap !== undefined ? gap : 0;
 
@@ -53,7 +53,7 @@ class LayoutUtils {
     area: Rect,
     weights: number[],
     gap?: number,
-    horizontal?: boolean
+    horizontal?: boolean,
   ): Rect[] {
     gap = gap !== undefined ? gap : 0;
     horizontal = horizontal !== undefined ? horizontal : false;
@@ -66,7 +66,7 @@ class LayoutUtils {
     return parts.map(([begin, length]) =>
       horizontal
         ? new Rect(begin, area.y, length, area.height)
-        : new Rect(area.x, begin, area.width, length)
+        : new Rect(area.x, begin, area.width, length),
     );
   }
 
@@ -81,14 +81,87 @@ class LayoutUtils {
     area: Rect,
     weight: number,
     gap?: number,
-    horizontal?: boolean
+    horizontal?: boolean,
   ): Rect[] {
     return LayoutUtils.splitAreaWeighted(
       area,
       [weight, 1 - weight],
       gap,
-      horizontal
+      horizontal,
     );
+  }
+  private static adjustWeightsNew(
+    [begin, length]: [number, number],
+    weights: number[],
+    gap: number,
+    target: number,
+    deltaFw: number,
+    deltaBw: number,
+    minSizes: number[],
+  ): number[] {
+    print(`krohnkite: III. deltaBw:${deltaBw} deltaFw:${deltaFw}`);
+    const parts = this.splitWeighted([begin, length], weights, gap);
+    const [targetBase, targetLength] = parts[target];
+
+    /* apply backward delta */
+    if (target > 0 && deltaBw !== 0) {
+      let neighborIdx = target - 1;
+      let delta = deltaBw;
+      let neighbors = [];
+      while (neighborIdx >= 0 && delta !== 0) {
+        const [neighborBase, neighborLength] = parts[neighborIdx];
+        const neighborMinSize = minSizes[neighborIdx];
+        let currentDelta = delta;
+        print(
+          `krohnkite: IV. neighborIdx:${neighborIdx} neighborLength:${neighborLength} neighborMinSize:${neighborMinSize}, delta: ${delta}`,
+        );
+        if (neighborLength - delta < neighborMinSize) {
+          currentDelta = neighborLength - neighborMinSize;
+          delta = delta - currentDelta;
+        } else delta = 0;
+        parts[target] = [
+          targetBase - currentDelta,
+          targetLength + currentDelta,
+        ];
+        parts[neighborIdx] = [neighborBase, neighborLength - currentDelta];
+        neighbors.forEach((idx) => {
+          const [nBase, nLength] = parts[idx];
+          parts[idx] = [nBase - currentDelta, nLength];
+        });
+        neighbors.push(neighborIdx);
+        neighborIdx--;
+      }
+    }
+
+    /* apply forward delta */
+    if (target < parts.length - 1 && deltaFw !== 0) {
+      let neighborIdx = target + 1;
+      let delta = deltaFw;
+      let neighbors = [];
+      while (neighborIdx <= parts.length - 1 && delta !== 0) {
+        const [neighborBase, neighborLength] = parts[neighborIdx];
+        const neighborMinSize = minSizes[neighborIdx];
+        let currentDelta = delta;
+        if (neighborLength - delta < neighborMinSize) {
+          currentDelta = neighborLength - neighborMinSize;
+          delta = delta - currentDelta;
+        } else delta = 0;
+
+        parts[target] = [targetBase, targetLength + currentDelta];
+        parts[neighborIdx] = [
+          neighborBase + currentDelta,
+          neighborLength - currentDelta,
+        ];
+        neighbors.forEach((idx) => {
+          const [nBase, nLength] = parts[idx];
+          parts[idx] = [nBase + currentDelta, nLength];
+        });
+        neighbors.push(neighborIdx);
+        neighborIdx++;
+      }
+    }
+
+    return LayoutUtils.calculateWeights(parts);
   }
 
   /**
@@ -106,7 +179,7 @@ class LayoutUtils {
     gap: number,
     target: number,
     deltaFw: number,
-    deltaBw: number
+    deltaBw: number,
   ): number[] {
     // TODO: configurable min length?
     const minLength = 1;
@@ -123,7 +196,7 @@ class LayoutUtils {
       const delta = clip(
         deltaBw,
         minLength - targetLength,
-        neighborLength - minLength
+        neighborLength - minLength,
       );
 
       parts[target] = [targetBase - delta, targetLength + delta];
@@ -139,7 +212,7 @@ class LayoutUtils {
       const delta = clip(
         deltaFw,
         minLength - targetLength,
-        neighborLength - minLength
+        neighborLength - minLength,
       );
 
       parts[target] = [targetBase, targetLength + delta];
@@ -164,21 +237,34 @@ class LayoutUtils {
     gap: number,
     target: number,
     delta: RectDelta,
-    horizontal?: boolean
+    horizontal?: boolean,
+    minSizes?: number[],
+    reason?: string,
   ): number[] {
+    //TODO: LOG?.
     const line: [number, number] = horizontal
       ? [area.x, area.width]
       : [area.y, area.height];
     const [deltaFw, deltaBw] = horizontal
       ? [delta.east, delta.west]
       : [delta.south, delta.north];
+    if (minSizes)
+      return LayoutUtils.adjustWeightsNew(
+        line,
+        weights,
+        gap,
+        target,
+        deltaFw,
+        deltaBw,
+        minSizes,
+      );
     return LayoutUtils.adjustWeights(
       line,
       weights,
       gap,
       target,
       deltaFw,
-      deltaBw
+      deltaBw,
     );
   }
 
@@ -197,7 +283,7 @@ class LayoutUtils {
     gap: number,
     target: number,
     delta: RectDelta,
-    horizontal?: boolean
+    horizontal?: boolean,
   ): number {
     const weights = [weight, 1 - weight];
     const newWeights = LayoutUtils.adjustAreaWeights(
@@ -206,7 +292,7 @@ class LayoutUtils {
       gap,
       target,
       delta,
-      horizontal
+      horizontal,
     );
     return newWeights[0];
   }
@@ -226,7 +312,7 @@ class LayoutUtils {
     area: Rect,
     geometries: Rect[],
     gap?: number,
-    horizontal?: boolean
+    horizontal?: boolean,
   ): number[] {
     gap = gap !== undefined ? gap : 0;
     horizontal = horizontal !== undefined ? horizontal : false;

@@ -61,6 +61,7 @@ tasks:
       - cp res/config.ui {{.KWINPKG_DIR}}/contents/ui/config.ui
       - cp res/popup.qml  {{.KWINPKG_DIR}}/contents/ui/popup.qml
       - cp res/shortcuts.qml  {{.KWINPKG_DIR}}/contents/ui/shortcuts.qml
+      - cp res/dbus.qml  {{.KWINPKG_DIR}}/contents/ui/dbus.qml
       - cp {{.NODE_SCRIPT}} {{.KWINPKG_DIR}}/contents/code/script.js
       - cp res/main.js   {{.KWINPKG_DIR}}/contents/code/main.js
       - cp res/config.xml  {{.KWINPKG_DIR}}/contents/config/main.xml
@@ -70,6 +71,7 @@ tasks:
       - res/config.ui
       - res/popup.qml
       - res/shortcuts.qml
+      - res/dbus.qml
       - "{{.NODE_SCRIPT}}"
       - res/main.js
       - res/config.xml
@@ -78,6 +80,7 @@ tasks:
       - "{{.KWINPKG_DIR}}/contents/ui/config.ui"
       - "{{.KWINPKG_DIR}}/contents/ui/popup.qml"
       - "{{.KWINPKG_DIR}}/contents/ui/shortcuts.qml"
+      - "{{.KWINPKG_DIR}}/contents/ui/dbus.qml"
       - "{{.KWINPKG_DIR}}/contents/code/script.js"
       - "{{.KWINPKG_DIR}}/contents/code/main.js"
       - "{{.KWINPKG_DIR}}/contents/config/config.xml"

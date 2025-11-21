@@ -48,13 +48,25 @@ class ColumnsLayout implements ILayout {
         (delta.north !== 0 || delta.south !== 0))
     ) {
       let oldWeights: Array<number>;
+      let minSizes: number[] = [];
+      const horizontal = this.direction.east || this.direction.west;
       if (isReverse) {
         oldWeights = this.columns
           .slice(0)
           .reverse()
-          .map((column) => column.weight);
+          .map((column) => {
+            minSizes.push(
+              horizontal ? column.minSize.width : column.minSize.height,
+            );
+            return column.weight;
+          });
       } else {
-        oldWeights = this.columns.map((column) => column.weight);
+        oldWeights = this.columns.map((column) => {
+          minSizes.push(
+            horizontal ? column.minSize.width : column.minSize.height,
+          );
+          return column.weight;
+        });
       }
       const weights = LayoutUtils.adjustAreaWeights(
         area,
@@ -62,7 +74,8 @@ class ColumnsLayout implements ILayout {
         gap,
         isReverse ? columnsLength - 1 - columnId : columnId,
         delta,
-        this.direction.east || this.direction.west,
+        horizontal,
+        minSizes,
       );
 
       weights.forEach((weight, i) => {

@@ -572,6 +572,7 @@ class TilingEngine {
     if (window === null) {
       const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
       if (tiles.length > 1) ctx.currentWindow = tiles[0];
+      ctx.dBusMoveMouseToFocus();
       return;
     }
 
@@ -582,6 +583,7 @@ class TilingEngine {
     if (!window || idx < 0) {
       /* unmanaged window -> focus master */
       ctx.currentWindow = visibles[0];
+      ctx.dBusMoveMouseToFocus();
       return;
     }
 
@@ -589,6 +591,7 @@ class TilingEngine {
     const newIndex = (idx + (step % num) + num) % num;
 
     ctx.currentWindow = visibles[newIndex];
+    ctx.dBusMoveMouseToFocus();
   }
 
   /**
@@ -602,21 +605,30 @@ class TilingEngine {
     }
     let surfaceWin = ctx.focusNeighborWindow(dir, winTypes);
     if (surfaceWin === true) {
+      ctx.dBusMoveMouseToFocus();
       return;
     }
     if (surfaceWin === false) surfaceWin = null;
     if (
-      ((!ctx.isMetaMode && !CONFIG.focusNormalDisableScreens) ||
-        (ctx.isMetaMode && !CONFIG.focusMetaDisableScreens)) &&
-      ctx.focusOutput(surfaceWin, dir, winTypes)
-    )
-      return;
+      (!ctx.isMetaMode && !CONFIG.focusNormalDisableScreens) ||
+      (ctx.isMetaMode && !CONFIG.focusMetaDisableScreens)
+    ) {
+      const result = ctx.focusOutput(surfaceWin, dir, winTypes);
+      if (result !== null) {
+        if (result) ctx.dBusMoveMouseToFocus();
+        else if (result === false) ctx.dBusMoveMouseToCenter();
+        return;
+      }
+    }
 
     if (
       (!ctx.isMetaMode && !CONFIG.focusNormalDisableVDesktops) ||
       (ctx.isMetaMode && !CONFIG.focusMetaDisableVDesktops)
-    )
-      ctx.focusVDesktop(surfaceWin, dir, winTypes);
+    ) {
+      const result = ctx.focusVDesktop(surfaceWin, dir, winTypes);
+      if (result) ctx.dBusMoveMouseToFocus();
+      else if (result === false) ctx.dBusMoveMouseToCenter();
+    }
   }
 
   /**

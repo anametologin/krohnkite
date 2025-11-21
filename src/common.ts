@@ -152,6 +152,11 @@ interface IShortcuts {
   getKrohnkiteMeta(): ShortcutHandler;
 }
 
+interface IDBus {
+  getDBusMoveMouseToFocus(): DBusCall;
+  getDBusMoveMouseToCenter(): DBusCall;
+}
+
 interface IConfig {
   //Layouts
   tileLayoutInitialAngle: string;
@@ -314,6 +319,8 @@ interface IDriverContext {
   currentWindow: WindowClass | null;
   isMetaMode: boolean;
 
+  dBusMoveMouseToFocus(): void;
+  dBusMoveMouseToCenter(): void;
   setTimeout(func: () => void, timeout: number): void;
   showNotification(text: string): void;
   moveWindowsToScreen(windowsToScreen: [Output, WindowClass[]][]): void;
@@ -328,12 +335,12 @@ interface IDriverContext {
     window: Window | null,
     direction: Direction,
     winTypes: WinTypes,
-  ): boolean;
+  ): boolean | null;
   focusVDesktop(
     window: Window | null,
     direction: Direction,
     winTypes: WinTypes,
-  ): void;
+  ): boolean | null;
   metaPushed(): void;
 }
 

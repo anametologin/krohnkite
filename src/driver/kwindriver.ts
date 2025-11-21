@@ -80,6 +80,8 @@ class KWinDriver implements IDriverContext {
   }
 
   public workspace: Workspace;
+  private _dBusMoveMouseToFocus: DBusCall;
+  private _dBusMoveMouseToCenter: DBusCall;
   private shortcuts: IShortcuts;
   private engine: TilingEngine;
   private control: TilingController;
@@ -93,6 +95,8 @@ class KWinDriver implements IDriverContext {
     CONFIG = KWINCONFIG = new KWinConfig();
     this.workspace = api.workspace;
     this.shortcuts = api.shortcuts;
+    this._dBusMoveMouseToFocus = api.dbus.getDBusMoveMouseToFocus();
+    this._dBusMoveMouseToCenter = api.dbus.getDBusMoveMouseToCenter();
     this.engine = new TilingEngine();
     this.control = new TilingController(this.engine);
     this.windowMap = new WrapperMap(
@@ -161,6 +165,12 @@ class KWinDriver implements IDriverContext {
     }
     return null;
   }
+  public dBusMoveMouseToFocus() {
+    this._dBusMoveMouseToFocus.call();
+  }
+  public dBusMoveMouseToCenter() {
+    this._dBusMoveMouseToCenter.call();
+  }
 
   public focusNeighborWindow(
     direction: Direction,
@@ -200,21 +210,24 @@ class KWinDriver implements IDriverContext {
     window: Window | null,
     direction: Direction,
     winTypes: WinTypes,
-  ): boolean {
+  ): boolean | null {
     let neighbor = KWinDriver.getNeighborOutput(
       this.workspace,
       direction,
       this.workspace.activeScreen,
     );
-    if (neighbor === null) return false;
+    if (neighbor === null) return null;
     let neighbor_surface = this._surfaceStore.getSurface(
       neighbor,
       this.workspace.currentActivity,
       this.workspace.currentDesktop,
     );
-    if (!this._setFocusOnSurface(window, neighbor_surface, direction, winTypes))
+    if (
+      !this._setFocusOnSurface(window, neighbor_surface, direction, winTypes)
+    ) {
       this._makeActiveScreen(neighbor_surface.output);
-
+      return false;
+    }
     return true;
   }
 
@@ -277,10 +290,10 @@ class KWinDriver implements IDriverContext {
     window: Window | null,
     direction: Direction,
     winTypes: WinTypes,
-  ): void {
+  ): boolean | null {
     let neighbor = this._getNeighborVirtualDesktop(direction);
     let neighbor_surface: ISurface;
-    if (neighbor === null) return;
+    if (neighbor === null) return null;
     this.workspace.currentDesktop = neighbor;
     let output = this._getOutputByDirection(direction);
     if (output !== null) {
@@ -296,7 +309,12 @@ class KWinDriver implements IDriverContext {
         neighbor,
       );
     }
-    this._setFocusOnSurface(window, neighbor_surface, direction, winTypes);
+    return this._setFocusOnSurface(
+      window,
+      neighbor_surface,
+      direction,
+      winTypes,
+    );
   }
 
   public static getNeighborOutput(
@@ -595,7 +613,7 @@ class KWinDriver implements IDriverContext {
     direction: Direction,
     winTypes: WinTypes,
     localWindows: Window[] | null = null,
-  ) {
+  ): boolean {
     let sourceRect: Rect;
     if (localWindows !== null && window !== null) {
       sourceRect = toRect(window.frameGeometry);
@@ -1136,8 +1154,9 @@ class KWinDriver implements IDriverContext {
         { winClass: [`${client.resourceClass}`] },
       );
       const window = this.windowMap.get(client);
-      if (client.active && window !== null)
+      if (client.active && window !== null) {
         this.control.onWindowFocused(this, window);
+      }
     });
 
     this.connect(this.workspace.windowRemoved, (client: Window) => {

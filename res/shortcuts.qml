@@ -10,7 +10,7 @@ import QtQuick;
 import org.kde.kwin;
 
 Item {
-    id: dbus;
+    id: shortcuts;
 
     function getFocusNext() {
         return focusNext;

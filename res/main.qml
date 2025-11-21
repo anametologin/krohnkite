@@ -36,7 +36,8 @@ Item {
             "workspace": Workspace,
             // "options": Options,
             "kwin": KWin,
-            "shortcuts": shortcutsLoader.item
+            "shortcuts": shortcutsLoader.item,
+            "dbus": dbusCallLoader.item
         };
 
         (new K.KWinDriver(api)).main();
@@ -45,5 +46,11 @@ Item {
         id: shortcutsLoader;
 
         source: "shortcuts.qml";
+    }
+
+    Loader {
+        id: dbusCallLoader;
+
+        source: "dbus.qml"
     }
 }
