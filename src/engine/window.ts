@@ -264,6 +264,10 @@ class WindowClass {
     this.window.commit(geometry);
   }
 
+  public moveMouseToFocus() {
+    this.window.moveMouseToFocus();
+  }
+
   public visible(srf: ISurface): boolean {
     return this.window.visible(srf);
   }

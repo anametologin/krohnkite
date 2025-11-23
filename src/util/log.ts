@@ -14,7 +14,7 @@ class Logging implements ILogModules {
     this._isIncludeMode = true;
     this._logModules = Logging.parseModules(modules);
     this._filters = this.parseFilters(filters);
-    this._started = new Date().getTime();
+    this._started = getTime();
   }
   public send(
     module?: LogModule,
@@ -89,7 +89,7 @@ class Logging implements ILogModules {
   }
 
   private _print(module?: LogModule, action?: string, message?: string) {
-    const timestamp = (new Date().getTime() - this._started) / 1000;
+    const timestamp = (getTime() - this._started) / 1000;
     print(
       `Krohnkite.log [${timestamp}], ${
         module !== undefined ? `[${module}]` : ""

@@ -18,6 +18,9 @@ class Err {
 function warning(s: string) {
   print(`Krohnkite.WARNING: ${s}`);
 }
+function info(s: string) {
+  print(`Krohnkite: ${s}`);
+}
 
 function clip(value: number, min: number, max: number): number {
   if (value < min) return min;
@@ -48,6 +51,16 @@ function getRandomInt(max: number, signed = false): number {
   if (signed && Math.random() < 0.5) return -randomNumber;
   return randomNumber;
 }
+
+function getTime(): number {
+  const time = new Date().getTime();
+  if (Number.isNaN(time)) {
+    warning("getTime is Nan, wrong Time");
+    return 0;
+  }
+  return time;
+}
+
 /**
  * Partition the given array into two parts, based on the value of the predicate
  *
@@ -57,14 +70,14 @@ function getRandomInt(max: number, signed = false): number {
  */
 function partitionArray<T>(
   array: T[],
-  predicate: (item: T, index: number) => boolean
+  predicate: (item: T, index: number) => boolean,
 ): [T[], T[]] {
   return array.reduce(
     (parts: [T[], T[]], item: T, index: number) => {
       parts[predicate(item, index) ? 0 : 1].push(item);
       return parts;
     },
-    [[], []]
+    [[], []],
   );
 }
 
@@ -102,7 +115,7 @@ function overlap(
   min1: number,
   max1: number,
   min2: number,
-  max2: number
+  max2: number,
 ): boolean {
   const min = Math.min;
   const max = Math.max;
@@ -120,7 +133,7 @@ class SurfaceCfg<SurfaceCfgType> {
     outputName: string,
     activityId: string,
     vDesktopName: string,
-    cfg: SurfaceCfgType
+    cfg: SurfaceCfgType,
   ) {
     this.outputName = outputName;
     this.activityId = activityId;
@@ -130,7 +143,7 @@ class SurfaceCfg<SurfaceCfgType> {
   public isFit(
     output: Output,
     activity: string,
-    vDesktop: VirtualDesktop
+    vDesktop: VirtualDesktop,
   ): boolean {
     return (
       (this.outputName === "" || this.outputName === output.name) &&
@@ -162,7 +175,7 @@ function getSurfacesCfg(userConfig: string[]): IUnvalidatedSurfaceCfg[] {
     let surfaceCfgString = cfg.split(":").map((part) => part.trim());
     if (surfaceCfgString.length !== 4) {
       warning(
-        `Invalid User surface config: ${cfg}, config must have three colons`
+        `Invalid User surface config: ${cfg}, config must have three colons`,
       );
       return;
     }

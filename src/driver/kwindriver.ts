@@ -51,7 +51,7 @@ class KWinDriver implements IDriverContext {
 
   public set currentWindow(window: WindowClass | null) {
     if (window !== null) {
-      window.timestamp = new Date().getTime();
+      window.timestamp = getTime();
       this.workspace.activeWindow = (window.window as KWinWindow).window;
     }
   }
@@ -91,6 +91,7 @@ class KWinDriver implements IDriverContext {
   constructor(api: Api) {
     KWIN = api.kwin;
     CONFIG = KWINCONFIG = new KWinConfig();
+    DBUS = new DBusManager(api.dbus);
     this.workspace = api.workspace;
     this.shortcuts = api.shortcuts;
     this.engine = new TilingEngine();
@@ -212,13 +213,15 @@ class KWinDriver implements IDriverContext {
       this.workspace.currentActivity,
       this.workspace.currentDesktop,
     );
-    if (!this._setFocusOnSurface(window, neighbor_surface, direction, winTypes))
+    if (
+      !this._setFocusOnSurface(window, neighbor_surface, direction, winTypes)
+    ) {
       this._makeActiveScreen(neighbor_surface.output);
-
+    }
     return true;
   }
 
-  public focusSpecial(direction: Direction) {
+  public focusSpecial(direction: Direction): boolean {
     switch (direction) {
       case "up": {
         let screens = this.workspace.screens;
@@ -227,15 +230,16 @@ class KWinDriver implements IDriverContext {
         let idx = screens.indexOf(output);
         if (idx < 0) {
           warning(`kwindriver: focusNeighborWindow: screen doesn't found.`);
-          return;
+          return false;
         }
         idx = idx < screens.length - 1 ? idx + 1 : 0;
         this._makeActiveScreen(screens[idx]);
-        return;
+        DBUS.moveMouseToCenter();
+        return false;
       }
       case "down": {
         let window = this.workspace.activeWindow;
-        if (!window) return;
+        if (!window) return false;
         let windows = this._getWindowsByDirection(
           WinTypes.special,
           this.currentSurface,
@@ -245,12 +249,14 @@ class KWinDriver implements IDriverContext {
         let idx = windows.indexOf(window);
         if (idx < 0) {
           this.workspace.activeWindow = windows[0];
-          return;
+          DBUS.moveMouseToFocus();
+          return false;
         }
-        if (windows.length === 1) return;
+        if (windows.length === 1) return false;
         idx = idx < windows.length - 1 ? idx + 1 : 0;
         this.workspace.activeWindow = windows[idx];
-        return;
+        DBUS.moveMouseToFocus();
+        return false;
       }
       case "right":
       case "left": {
@@ -260,7 +266,7 @@ class KWinDriver implements IDriverContext {
         let idx = desktops.indexOf(currentDesktop);
         if (idx < 0) {
           warning(`kwindriver: focusNeighborWindow: vDesktop doesn't found.`);
-          return;
+          return false;
         }
         if (direction === "left") {
           idx = idx > 0 ? idx - 1 : desktops.length - 1;
@@ -268,7 +274,7 @@ class KWinDriver implements IDriverContext {
           idx = idx < desktops.length - 1 ? idx + 1 : 0;
         }
         this.workspace.currentDesktop = desktops[idx];
-        return;
+        return true;
       }
     }
   }
@@ -277,10 +283,10 @@ class KWinDriver implements IDriverContext {
     window: Window | null,
     direction: Direction,
     winTypes: WinTypes,
-  ): void {
+  ): boolean {
     let neighbor = this._getNeighborVirtualDesktop(direction);
     let neighbor_surface: ISurface;
-    if (neighbor === null) return;
+    if (neighbor === null) return false;
     this.workspace.currentDesktop = neighbor;
     let output = this._getOutputByDirection(direction);
     if (output !== null) {
@@ -296,7 +302,14 @@ class KWinDriver implements IDriverContext {
         neighbor,
       );
     }
-    this._setFocusOnSurface(window, neighbor_surface, direction, winTypes);
+    let result = this._setFocusOnSurface(
+      window,
+      neighbor_surface,
+      direction,
+      winTypes,
+    );
+    DBUS.moveMouseToCenter();
+    return result;
   }
 
   public static getNeighborOutput(
@@ -370,7 +383,7 @@ class KWinDriver implements IDriverContext {
         `Meta toggled ${this._isMetaMode.state ? "on" : "off"}`,
       );
     } else if (CONFIG.metaIsPushedTwice) {
-      let pushedTime = new Date().getTime();
+      let pushedTime = getTime();
       if (pushedTime - this._isMetaMode.lastPushed < CONFIG.metaTimeout - 200) {
         this._isMetaMode.toggleMode = !this._isMetaMode.toggleMode;
         this._isMetaMode.state = this._isMetaMode.toggleMode;
@@ -468,7 +481,11 @@ class KWinDriver implements IDriverContext {
     this.setTimeout(poll, interval);
   }
 
-  public moveToScreen(window: WindowClass, direction: Direction): boolean {
+  public moveToScreen(
+    window: WindowClass,
+    direction: Direction,
+    targetOutput: Output | null = null,
+  ): boolean {
     const client = (window.window as KWinWindow).window;
 
     // Try the client's output property and match by name
@@ -493,15 +510,16 @@ class KWinDriver implements IDriverContext {
     if (!sourceOutput) return false;
 
     // Find the adjacent output.
-    let targetOutput: Output | null = null;
-    try {
-      targetOutput = KWinDriver.getNeighborOutput(
-        this.workspace,
-        direction,
-        sourceOutput,
-      );
-    } catch (e) {
-      targetOutput = null;
+    if (!targetOutput) {
+      try {
+        targetOutput = KWinDriver.getNeighborOutput(
+          this.workspace,
+          direction,
+          sourceOutput,
+        );
+      } catch (e) {
+        targetOutput = null;
+      }
     }
 
     if (!targetOutput) return false;
@@ -520,6 +538,7 @@ class KWinDriver implements IDriverContext {
     const finishActivation = () => {
       try {
         this.workspace.activeWindow = client;
+        DBUS.moveMouseToCenter(20);
       } catch (e) {
         /* ignore */
       }
@@ -564,7 +583,7 @@ class KWinDriver implements IDriverContext {
     if (across) {
       let output = this._getOutputByDirection(direction);
       if (output !== null) {
-        this.moveWindowsToScreen([[output, [window]]]);
+        this.moveToScreen(window, direction, output);
         return false; // moveWindowsToScreen arrange screens
       }
     }
@@ -595,7 +614,7 @@ class KWinDriver implements IDriverContext {
     direction: Direction,
     winTypes: WinTypes,
     localWindows: Window[] | null = null,
-  ) {
+  ): boolean {
     let sourceRect: Rect;
     if (localWindows !== null && window !== null) {
       sourceRect = toRect(window.frameGeometry);
@@ -1123,8 +1142,10 @@ class KWinDriver implements IDriverContext {
         { winClass: [`${client.resourceClass}`] },
       );
       const window = this.addWindow(client);
-      if (client.active && window !== null)
+      if (client.active && window !== null) {
         this.control.onWindowFocused(this, window);
+        DBUS.moveMouseToCenter(20);
+      }
     });
 
     this.connect(this.workspace.windowActivated, (client: Window) => {
@@ -1136,8 +1157,9 @@ class KWinDriver implements IDriverContext {
         { winClass: [`${client.resourceClass}`] },
       );
       const window = this.windowMap.get(client);
-      if (client.active && window !== null)
+      if (client.active && window !== null) {
         this.control.onWindowFocused(this, window);
+      }
     });
 
     this.connect(this.workspace.windowRemoved, (client: Window) => {

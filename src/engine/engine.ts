@@ -572,6 +572,7 @@ class TilingEngine {
     if (window === null) {
       const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
       if (tiles.length > 1) ctx.currentWindow = tiles[0];
+      DBUS.moveMouseToFocus();
       return;
     }
 
@@ -582,6 +583,7 @@ class TilingEngine {
     if (!window || idx < 0) {
       /* unmanaged window -> focus master */
       ctx.currentWindow = visibles[0];
+      DBUS.moveMouseToFocus();
       return;
     }
 
@@ -589,34 +591,41 @@ class TilingEngine {
     const newIndex = (idx + (step % num) + num) % num;
 
     ctx.currentWindow = visibles[newIndex];
+    DBUS.moveMouseToFocus();
   }
 
   /**
    * Focus a neighbor at the given direction.
    */
-  public focusDir(ctx: IDriverContext, dir: Direction) {
+  public focusDir(ctx: IDriverContext, dir: Direction): boolean {
     let winTypes = ctx.isMetaMode ? CONFIG.focusMetaCfg : CONFIG.focusNormalCfg;
     if (winTypes === WinTypes.special) {
-      ctx.focusSpecial(dir);
-      return;
+      return ctx.focusSpecial(dir);
     }
     let surfaceWin = ctx.focusNeighborWindow(dir, winTypes);
     if (surfaceWin === true) {
-      return;
+      DBUS.moveMouseToFocus();
+      return false;
     }
     if (surfaceWin === false) surfaceWin = null;
     if (
-      ((!ctx.isMetaMode && !CONFIG.focusNormalDisableScreens) ||
-        (ctx.isMetaMode && !CONFIG.focusMetaDisableScreens)) &&
-      ctx.focusOutput(surfaceWin, dir, winTypes)
-    )
-      return;
+      (!ctx.isMetaMode && !CONFIG.focusNormalDisableScreens) ||
+      (ctx.isMetaMode && !CONFIG.focusMetaDisableScreens)
+    ) {
+      const result = ctx.focusOutput(surfaceWin, dir, winTypes);
+      if (result) {
+        DBUS.moveMouseToCenter();
+        return false;
+      }
+    }
 
     if (
       (!ctx.isMetaMode && !CONFIG.focusNormalDisableVDesktops) ||
       (ctx.isMetaMode && !CONFIG.focusMetaDisableVDesktops)
-    )
-      ctx.focusVDesktop(surfaceWin, dir, winTypes);
+    ) {
+      return ctx.focusVDesktop(surfaceWin, dir, winTypes);
+    }
+    return false;
   }
 
   /**
@@ -685,6 +694,7 @@ class TilingEngine {
     const x = geometry.x + hStepSize * hStep;
     const y = geometry.y + vStepSize * vStep;
 
+    window.moveMouseToFocus();
     window.forceSetGeometry(new Rect(x, y, geometry.width, geometry.height));
   }
 
@@ -694,12 +704,15 @@ class TilingEngine {
       /* if no current window, select the first tile. */
       const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
       if (tiles.length > 0) ctx.currentWindow = tiles[0];
+      DBUS.moveMouseToFocus();
       return false;
     }
 
     const state = window.state;
-    if (WindowClass.isFloatingState(state)) this.moveFloat(window, dir);
-    else if (WindowClass.isTiledState(state)) {
+    if (WindowClass.isFloatingState(state)) {
+      this.moveFloat(window, dir);
+      return false;
+    } else if (WindowClass.isTiledState(state)) {
       return this.swapDirection(ctx, dir, window);
     }
     return true;

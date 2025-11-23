@@ -35,6 +35,19 @@ interface ShortcutHandler {
   activated: Signal<() => void>;
 }
 
+interface DBusCall {
+  dbusInterface: string;
+  service: string;
+  path: string;
+  method: string;
+  arguments: any[];
+
+  call(): void;
+
+  finished: Signal<(returnValue: any[]) => void>;
+  failed: Signal<() => void>;
+}
+
 interface QByteArray {
   /* keep it empty for now */
 }

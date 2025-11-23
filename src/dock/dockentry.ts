@@ -37,7 +37,7 @@ class DockEntry implements IDockEntry {
     const IS_WIDE = workingArea.width > workingArea.height;
     let dockCfg: IDockCfg;
 
-    let renderedTime = new Date().getTime();
+    let renderedTime = getTime();
     let renderedOutputId = this.id;
 
     this.arrangeSlots(dockedWindows);
@@ -58,14 +58,14 @@ class DockEntry implements IDockEntry {
         dockCfg = leftSlot.window!.dock!.cfg;
         let leftSlotHeight = Math.min(
           (workingArea.height * dockCfg.vHeight) / 100,
-          height
+          height,
         );
 
         let initRect = new Rect(
           leftBorder,
           topBorder,
           (workingArea.width * dockCfg.vWide) / 100,
-          leftSlotHeight
+          leftSlotHeight,
         );
         leftBorder = leftBorder + initRect.width;
         width = width - initRect.width;
@@ -74,7 +74,7 @@ class DockEntry implements IDockEntry {
           initRect,
           leftSlot.position,
           dockCfg,
-          height
+          height,
         );
         leftSlot.window!.dock!.renderedTime = renderedTime;
         leftSlot.window!.dock!.renderedOutputId = renderedOutputId;
@@ -85,7 +85,7 @@ class DockEntry implements IDockEntry {
         dockCfg = rightSlot.window!.dock!.cfg;
         let rightSlotHeight = Math.min(
           (workingArea.height * dockCfg.vHeight) / 100,
-          height
+          height,
         );
         let initRect = new Rect(
           workingArea.x +
@@ -93,7 +93,7 @@ class DockEntry implements IDockEntry {
             (workingArea.width * dockCfg.vWide) / 100,
           topBorder,
           (workingArea.width * dockCfg.vWide) / 100,
-          rightSlotHeight
+          rightSlotHeight,
         );
         width = width - initRect.width;
 
@@ -101,7 +101,7 @@ class DockEntry implements IDockEntry {
           initRect,
           rightSlot.position,
           dockCfg,
-          height
+          height,
         );
         rightSlot.window!.dock!.renderedTime = renderedTime;
         rightSlot.window!.dock!.renderedOutputId = renderedOutputId;
@@ -112,13 +112,13 @@ class DockEntry implements IDockEntry {
         dockCfg = topSlot.window!.dock!.cfg;
         let topSlotWidth = Math.min(
           (workingArea.width * dockCfg.hWide) / 100,
-          width
+          width,
         );
         let initRect = new Rect(
           leftBorder,
           topBorder,
           topSlotWidth,
-          (workingArea.height * dockCfg.hHeight) / 100
+          (workingArea.height * dockCfg.hHeight) / 100,
         );
         topBorder = topBorder + initRect.height;
         height = height - initRect.height;
@@ -127,7 +127,7 @@ class DockEntry implements IDockEntry {
           initRect,
           topSlot.position,
           dockCfg,
-          width
+          width,
         );
         topSlot.window!.dock!.renderedTime = renderedTime;
         topSlot.window!.dock!.renderedOutputId = renderedOutputId;
@@ -138,7 +138,7 @@ class DockEntry implements IDockEntry {
         dockCfg = bottomSlot.window!.dock!.cfg;
         let bottomSlotWidth = Math.min(
           (workingArea.width * dockCfg.hWide) / 100,
-          width
+          width,
         );
         let initRect = new Rect(
           leftBorder,
@@ -146,7 +146,7 @@ class DockEntry implements IDockEntry {
             workingArea.height -
             (workingArea.height * dockCfg.hHeight) / 100,
           bottomSlotWidth,
-          (workingArea.height * dockCfg.hHeight) / 100
+          (workingArea.height * dockCfg.hHeight) / 100,
         );
         height = height - initRect.height;
 
@@ -154,7 +154,7 @@ class DockEntry implements IDockEntry {
           initRect,
           bottomSlot.position,
           dockCfg,
-          width
+          width,
         );
         bottomSlot.window!.dock!.renderedTime = renderedTime;
         bottomSlot.window!.dock!.renderedOutputId = renderedOutputId;
@@ -212,7 +212,7 @@ class DockEntry implements IDockEntry {
     initRect: Rect,
     position: DockPosition,
     cfg: IDockCfg,
-    wholeSize: number
+    wholeSize: number,
   ): Rect {
     let leftBorder = initRect.x;
     let topBorder = initRect.y;
@@ -227,7 +227,7 @@ class DockEntry implements IDockEntry {
           leftBorder,
           cfg.vEdgeGap,
           position,
-          cfg.vEdgeAlignment
+          cfg.vEdgeAlignment,
         );
 
         if (2 * cfg.vGap < height) {
@@ -251,7 +251,7 @@ class DockEntry implements IDockEntry {
           topBorder,
           cfg.hEdgeGap,
           position,
-          cfg.hEdgeAlignment
+          cfg.hEdgeAlignment,
         );
 
         if (2 * cfg.hGap < width) {
@@ -276,7 +276,7 @@ class DockEntry implements IDockEntry {
     sideBorder: number,
     gap: number,
     position: DockPosition,
-    alignment: EdgeAlignment
+    alignment: EdgeAlignment,
   ): [number, number] {
     if (2 * gap > dimension) return [dimension, sideBorder];
     switch (alignment) {
@@ -337,7 +337,7 @@ class DockEntry implements IDockEntry {
 
   private arrangeContenders(
     windows: WindowClass[],
-    init: boolean
+    init: boolean,
   ): WindowClass[] {
     let contenders: WindowClass[] = [];
     for (const slot of this.slots) {
@@ -359,7 +359,7 @@ class DockEntry implements IDockEntry {
           if (w.dock.position === null) return true;
 
           tempDockedWindows.push(w);
-        })
+        }),
       );
       windows = tempDockedWindows;
 
@@ -392,11 +392,11 @@ class DockEntry implements IDockEntry {
       const minSize: ISize = {
         width: Math.max(
           (slot.window.minSize.width * 100) / workingArea.width,
-          5
+          5,
         ),
         height: Math.max(
           (slot.window.minSize.height * 100) / workingArea.height,
-          5
+          5,
         ),
       };
 
@@ -434,12 +434,12 @@ class DockEntry implements IDockEntry {
             let opMinSize: ISize = {
               width: Math.max(
                 (oppositeSlot.window!.minSize.width * 100) / workingArea.width,
-                5
+                5,
               ),
               height: Math.max(
                 (oppositeSlot.window!.minSize.height * 100) /
                   workingArea.height,
-                5
+                5,
               ),
             };
             if (oppositeDockCfg.vGap > MAX_GAPS.width)
@@ -492,12 +492,12 @@ class DockEntry implements IDockEntry {
             let opMinSize: ISize = {
               width: Math.max(
                 (oppositeSlot.window!.minSize.width * 100) / workingArea.width,
-                5
+                5,
               ),
               height: Math.max(
                 (oppositeSlot.window!.minSize.height * 100) /
                   workingArea.height,
-                5
+                5,
               ),
             };
 
@@ -544,7 +544,7 @@ class DockEntry implements IDockEntry {
   private contendersSort(
     contenders: WindowClass[],
     position: DockPosition,
-    id: string
+    id: string,
   ) {
     function compare(a: WindowClass, b: WindowClass) {
       if (a.dock === null && b.dock === null) return 0;

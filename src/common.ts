@@ -152,6 +152,16 @@ interface IShortcuts {
   getKrohnkiteMeta(): ShortcutHandler;
 }
 
+interface IDBusQml {
+  getDBusExists(): DBusCall;
+  getDBusMoveMouseToFocus(): DBusCall;
+  getDBusMoveMouseToCenter(): DBusCall;
+}
+interface IDBus {
+  moveMouseToFocus(timeout?: number): void;
+  moveMouseToCenter(timeout?: number): void;
+}
+
 interface IConfig {
   //Layouts
   tileLayoutInitialAngle: string;
@@ -281,6 +291,7 @@ interface IDriverWindow {
   commit(geometry?: Rect, noBorder?: boolean, windowLayer?: WindowLayer): void;
   visible(srf: ISurface): boolean;
   getInitFloatGeometry(): Rect;
+  moveMouseToFocus(): void;
 }
 
 interface ISurfaceStore {
@@ -319,7 +330,7 @@ interface IDriverContext {
   moveWindowsToScreen(windowsToScreen: [Output, WindowClass[]][]): void;
   moveToScreen(window: WindowClass, direction: Direction): boolean;
   moveToVDesktop(window: WindowClass, direction: Direction): boolean;
-  focusSpecial(direction: Direction): void;
+  focusSpecial(direction: Direction): boolean;
   focusNeighborWindow(
     direction: Direction,
     winTypes: WinTypes,
@@ -333,7 +344,7 @@ interface IDriverContext {
     window: Window | null,
     direction: Direction,
     winTypes: WinTypes,
-  ): void;
+  ): boolean;
   metaPushed(): void;
 }
 
@@ -414,6 +425,7 @@ const LogModules = {
   printConfig: "printConfig",
   setTimeout: "setTimeout",
   window: "window",
+  dbus: "dbus",
 };
 type LogModule = (typeof LogModules)[keyof typeof LogModules];
 
@@ -465,6 +477,7 @@ const LogPartitions = {
       LogModules.printConfig,
       LogModules.setTimeout,
       LogModules.window,
+      LogModules.dbus,
     ],
   },
 } as const;
@@ -496,3 +509,4 @@ interface IFloatInit {
 // Globals
 let CONFIG: IConfig;
 let LOG: ILogModules | undefined;
+let DBUS: IDBus;

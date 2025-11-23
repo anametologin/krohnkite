@@ -192,6 +192,12 @@ class TilingController {
     ctx: IDriverContext,
     window: WindowClass,
   ): void {
+    LOG?.send(
+      LogModules.bufferGeometryChanged,
+      "enforceSize",
+      `Window: id:${window.id} actualGeometry: ${window.actualGeometry}, commitGeometry:${window.geometry}`,
+      { winClass: [`${(window.window as KWinWindow).window.resourceClass}`] },
+    );
     this.engine.enforceSize(ctx, window);
   }
 
@@ -220,7 +226,7 @@ class TilingController {
   }
 
   public onWindowFocused(ctx: IDriverContext, window: WindowClass) {
-    window.timestamp = new Date().getTime();
+    window.timestamp = getTime();
   }
 
   public onDesktopsChanged(ctx: IDriverContext, window: WindowClass) {
@@ -281,9 +287,11 @@ class TilingController {
       window.state === WindowState.Docked &&
       this.engine.handleDockShortcut(ctx, window, input)
     ) {
+      window?.moveMouseToFocus();
       this.engine.arrange(ctx, getMethodName());
       return;
     } else if (this.engine.handleLayoutShortcut(ctx, input, data)) {
+      window?.moveMouseToFocus();
       this.engine.arrange(ctx, getMethodName());
       return;
     }
@@ -291,28 +299,30 @@ class TilingController {
     switch (input) {
       case Shortcut.FocusNext:
         this.engine.focusOrder(ctx, +1);
+        isArrangeNeeded = false;
         break;
       case Shortcut.FocusPrev:
         this.engine.focusOrder(ctx, -1);
+        isArrangeNeeded = false;
         break;
 
       case Shortcut.MetaFocusUp:
       case Shortcut.FocusUp:
-        this.engine.focusDir(ctx, "up");
+        isArrangeNeeded = this.engine.focusDir(ctx, "up");
         break;
       case Shortcut.MetaFocusDown:
       case Shortcut.FocusDown:
-        this.engine.focusDir(ctx, "down");
+        isArrangeNeeded = this.engine.focusDir(ctx, "down");
         break;
       case Shortcut.MetaFocusLeft:
       case Shortcut.DWMLeft:
       case Shortcut.FocusLeft:
-        this.engine.focusDir(ctx, "left");
+        isArrangeNeeded = this.engine.focusDir(ctx, "left");
         break;
       case Shortcut.MetaFocusRight:
       case Shortcut.DWMRight:
       case Shortcut.FocusRight:
-        this.engine.focusDir(ctx, "right");
+        isArrangeNeeded = this.engine.focusDir(ctx, "right");
         break;
 
       case Shortcut.GrowWidth:
@@ -447,6 +457,7 @@ class TilingController {
         break;
     }
     if (!isArrangeNeeded) return;
+    window?.moveMouseToFocus();
     this.engine.arrange(ctx, getMethodName());
   }
 

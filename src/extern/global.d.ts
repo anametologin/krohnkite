@@ -16,6 +16,7 @@ interface Api {
   workspace: Workspace;
   kwin: KWin;
   shortcuts: IShortcuts;
+  dbus: IDBusQml;
 }
 declare var KWINCONFIG: KWinConfig;
 /* QML objects */

@@ -10,6 +10,10 @@ class KWinWindow implements IDriverWindow {
     return w.internalId.toString();
   }
 
+  public get isActive(): boolean {
+    return this.window.active;
+  }
+
   public get fullScreen(): boolean {
     return this.window.fullScreen;
   }
@@ -106,6 +110,7 @@ class KWinWindow implements IDriverWindow {
   private readonly isFloatByConfig: boolean;
   private readonly isIgnoredByConfig: boolean;
   private readonly _surfaceStore: KWinSurfaceStore;
+  private _movePointerToCenter: { isMove: boolean; time: number };
   private noBorderManaged: boolean;
   private noBorderOriginal: boolean;
 
@@ -116,6 +121,10 @@ class KWinWindow implements IDriverWindow {
   ) {
     this.workspace = workspace;
     this._surfaceStore = surfaceStore;
+    this._movePointerToCenter = {
+      isMove: false,
+      time: 0,
+    };
     this.window = window;
     this.id = KWinWindow.generateID(window);
     this.maximized = false;
@@ -132,6 +141,12 @@ class KWinWindow implements IDriverWindow {
       KWinWindow.isContain(KWINCONFIG.floatingClass, window.resourceClass) ||
       KWinWindow.isContain(KWINCONFIG.floatingClass, window.resourceName) ||
       matchWords(this.window.caption, KWINCONFIG.floatingTitle) >= 0;
+  }
+
+  public moveMouseToFocus() {
+    const time = getTime();
+    this._movePointerToCenter.isMove = this.isActive;
+    this._movePointerToCenter.time = time;
   }
 
   public commit(
@@ -227,6 +242,12 @@ class KWinWindow implements IDriverWindow {
       }
       if (this.window.deleted) return;
       this.window.frameGeometry = toQRect(geometry);
+      if (this._movePointerToCenter.isMove) {
+        this._movePointerToCenter.isMove = false;
+        if (getTime() - this._movePointerToCenter.time < 100) {
+          DBUS.moveMouseToFocus(20);
+        }
+      }
     }
   }
 
