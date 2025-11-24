@@ -250,7 +250,10 @@
 	    <label>Disable switching to other virtual desktops for focus</label>
         <default>false</default>
     </entry>
-
+    <entry name="movePointerOnFocus" type="Bool">
+      <label>Move mouse cursor to the center of a window/screen when it becomes focused</label>
+      <default>false</default>
+    </entry>
 
     <entry name="metaConf" type="String">
 	    <label>Case Insensitive. Redefining the default keybindings in Meta Mode (see the wiki for details)</label>

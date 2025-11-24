@@ -287,11 +287,15 @@ class TilingController {
       window.state === WindowState.Docked &&
       this.engine.handleDockShortcut(ctx, window, input)
     ) {
-      window?.moveMouseToFocus();
+      if (CONFIG.movePointerOnFocus) {
+        window?.moveMouseToFocus();
+      }
       this.engine.arrange(ctx, getMethodName());
       return;
     } else if (this.engine.handleLayoutShortcut(ctx, input, data)) {
-      window?.moveMouseToFocus();
+      if (CONFIG.movePointerOnFocus) {
+        window?.moveMouseToFocus();
+      }
       this.engine.arrange(ctx, getMethodName());
       return;
     }
@@ -457,7 +461,9 @@ class TilingController {
         break;
     }
     if (!isArrangeNeeded) return;
-    window?.moveMouseToFocus();
+    if (CONFIG.movePointerOnFocus) {
+      window?.moveMouseToFocus();
+    }
     this.engine.arrange(ctx, getMethodName());
   }
 
