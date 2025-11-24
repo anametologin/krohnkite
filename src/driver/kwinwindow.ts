@@ -204,7 +204,7 @@ class KWinWindow implements IDriverWindow {
         if (
           geometry.x < area.x &&
           KWinDriver.getNeighborOutput(this.workspace, "left", winOutput) ===
-            null
+          null
         ) {
           geometry.x = area.x;
         }
@@ -217,7 +217,7 @@ class KWinWindow implements IDriverWindow {
         if (
           geometry.maxX > area.maxX &&
           KWinDriver.getNeighborOutput(this.workspace, "right", winOutput) ===
-            null
+          null
         ) {
           if (geometry.width > area.width) {
             geometry.x = area.x;
@@ -229,7 +229,7 @@ class KWinWindow implements IDriverWindow {
         if (
           geometry.maxY > area.maxY &&
           KWinDriver.getNeighborOutput(this.workspace, "down", winOutput) ===
-            null
+          null
         ) {
           if (geometry.height > area.height) {
             geometry.y = area.y;
@@ -244,8 +244,10 @@ class KWinWindow implements IDriverWindow {
       this.window.frameGeometry = toQRect(geometry);
       if (this._movePointerToCenter.isMove) {
         this._movePointerToCenter.isMove = false;
-        if (getTime() - this._movePointerToCenter.time < 100) {
-          DBUS.moveMouseToFocus(20);
+        if (CONFIG.movePointerOnFocus) {
+          if (getTime() - this._movePointerToCenter.time < 100) {
+            DBUS.moveMouseToFocus(20);
+          }
         }
       }
     }

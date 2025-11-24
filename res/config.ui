@@ -3008,6 +3008,16 @@
                </property>
               </widget>
              </item>
+             <item row="2" column="0">
+              <widget class="QCheckBox" name="kcfg_movePointerOnFocus">
+               <property name="toolTip">
+                 <string>Move mouse cursor to the center of a window/screen when it becomes focused</string>
+               </property>
+               <property name="text">
+                 <string>Move pointer to window/screen center on focus</string>
+               </property>
+              </widget>
+             </item>
              <item row="0" column="2">
               <spacer name="horizontalSpacer_25">
                <property name="orientation">

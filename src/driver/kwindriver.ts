@@ -234,7 +234,9 @@ class KWinDriver implements IDriverContext {
         }
         idx = idx < screens.length - 1 ? idx + 1 : 0;
         this._makeActiveScreen(screens[idx]);
-        DBUS.moveMouseToCenter();
+        if (CONFIG.movePointerOnFocus) {
+          DBUS.moveMouseToCenter();
+        }
         return false;
       }
       case "down": {
@@ -249,13 +251,17 @@ class KWinDriver implements IDriverContext {
         let idx = windows.indexOf(window);
         if (idx < 0) {
           this.workspace.activeWindow = windows[0];
-          DBUS.moveMouseToFocus();
+          if (CONFIG.movePointerOnFocus) {
+            DBUS.moveMouseToFocus();
+          }
           return false;
         }
         if (windows.length === 1) return false;
         idx = idx < windows.length - 1 ? idx + 1 : 0;
         this.workspace.activeWindow = windows[idx];
-        DBUS.moveMouseToFocus();
+        if (CONFIG.movePointerOnFocus) {
+          DBUS.moveMouseToFocus();
+        }
         return false;
       }
       case "right":
@@ -308,7 +314,9 @@ class KWinDriver implements IDriverContext {
       direction,
       winTypes,
     );
-    DBUS.moveMouseToCenter();
+    if (CONFIG.movePointerOnFocus) {
+      DBUS.moveMouseToCenter();
+    }
     return result;
   }
 
@@ -538,7 +546,9 @@ class KWinDriver implements IDriverContext {
     const finishActivation = () => {
       try {
         this.workspace.activeWindow = client;
-        DBUS.moveMouseToCenter(20);
+        if (CONFIG.movePointerOnFocus) {
+          DBUS.moveMouseToCenter(20);
+        }
       } catch (e) {
         /* ignore */
       }
@@ -1144,7 +1154,9 @@ class KWinDriver implements IDriverContext {
       const window = this.addWindow(client);
       if (client.active && window !== null) {
         this.control.onWindowFocused(this, window);
-        DBUS.moveMouseToCenter(20);
+        if (CONFIG.movePointerOnFocus) {
+          DBUS.moveMouseToCenter(20);
+        }
       }
     });
 
@@ -1205,8 +1217,7 @@ class KWinDriver implements IDriverContext {
       LOG?.send(
         LogModules.activitiesChanged,
         "eventFired",
-        `window: caption:${client.caption} internalID:${
-          client.internalId
+        `window: caption:${client.caption} internalID:${client.internalId
         }, activities: ${client.activities.join(",")}`,
         { winClass: [`${client.resourceClass}`] },
       );

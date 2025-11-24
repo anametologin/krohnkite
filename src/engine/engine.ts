@@ -327,12 +327,9 @@ class TilingEngine {
     LOG?.send(
       LogModules.arrangeScreen,
       "getTileablesReturn",
-      `output: ${srf.output.name}\n visibles number: ${
-        visibles.length
-      }\n tileables.length: ${screenData.tileables.length}, workingArea: ${
-        screenData.workingArea
-      }, layout: ${
-        screenData.layout
+      `output: ${srf.output.name}\n visibles number: ${visibles.length
+      }\n tileables.length: ${screenData.tileables.length}, workingArea: ${screenData.workingArea
+      }, layout: ${screenData.layout
       },capacity: ${capacity}, overCapacity: ${screenData.overCapacity.map(
         (win) => win.window.windowClassName,
       )}`,
@@ -435,16 +432,11 @@ class TilingEngine {
             LOG?.send(
               LogModules.arrangeScreen,
               "unfitLess",
-              `id: ${tile.id} commitGeometry:${tile.geometry}. minSize:${
-                tile.minSize.width
-              }:${tile.minSize.height} - heightUnfit:${
-                tile.minSize.height > tile.geometry.height
-              } widthUnfit: ${
-                tile.minSize.width > tile.geometry.width
-              }, tile.maxSize:${tile.maxSize.width}:${
-                tile.maxSize.height
-              } heightUnfit: ${
-                tile.maxSize.height < tile.geometry.height
+              `id: ${tile.id} commitGeometry:${tile.geometry}. minSize:${tile.minSize.width
+              }:${tile.minSize.height} - heightUnfit:${tile.minSize.height > tile.geometry.height
+              } widthUnfit: ${tile.minSize.width > tile.geometry.width
+              }, tile.maxSize:${tile.maxSize.width}:${tile.maxSize.height
+              } heightUnfit: ${tile.maxSize.height < tile.geometry.height
               }, widthUnfit: ${tile.maxSize.width < tile.geometry.width}`,
             );
             tile.state = WindowState.Floating;
@@ -572,7 +564,9 @@ class TilingEngine {
     if (window === null) {
       const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
       if (tiles.length > 1) ctx.currentWindow = tiles[0];
-      DBUS.moveMouseToFocus();
+      if (CONFIG.movePointerOnFocus) {
+        DBUS.moveMouseToFocus();
+      }
       return;
     }
 
@@ -583,7 +577,9 @@ class TilingEngine {
     if (!window || idx < 0) {
       /* unmanaged window -> focus master */
       ctx.currentWindow = visibles[0];
-      DBUS.moveMouseToFocus();
+      if (CONFIG.movePointerOnFocus) {
+        DBUS.moveMouseToFocus();
+      }
       return;
     }
 
@@ -591,7 +587,9 @@ class TilingEngine {
     const newIndex = (idx + (step % num) + num) % num;
 
     ctx.currentWindow = visibles[newIndex];
-    DBUS.moveMouseToFocus();
+    if (CONFIG.movePointerOnFocus) {
+      DBUS.moveMouseToFocus();
+    }
   }
 
   /**
@@ -604,7 +602,9 @@ class TilingEngine {
     }
     let surfaceWin = ctx.focusNeighborWindow(dir, winTypes);
     if (surfaceWin === true) {
-      DBUS.moveMouseToFocus();
+      if (CONFIG.movePointerOnFocus) {
+        DBUS.moveMouseToFocus();
+      }
       return false;
     }
     if (surfaceWin === false) surfaceWin = null;
@@ -614,7 +614,9 @@ class TilingEngine {
     ) {
       const result = ctx.focusOutput(surfaceWin, dir, winTypes);
       if (result) {
-        DBUS.moveMouseToCenter();
+        if (CONFIG.movePointerOnFocus) {
+          DBUS.moveMouseToCenter();
+        }
         return false;
       }
     }
@@ -694,7 +696,9 @@ class TilingEngine {
     const x = geometry.x + hStepSize * hStep;
     const y = geometry.y + vStepSize * vStep;
 
-    window.moveMouseToFocus();
+    if (CONFIG.movePointerOnFocus) {
+      window.moveMouseToFocus();
+    }
     window.forceSetGeometry(new Rect(x, y, geometry.width, geometry.height));
   }
 
@@ -704,7 +708,9 @@ class TilingEngine {
       /* if no current window, select the first tile. */
       const tiles = this.windows.getVisibleTiles(ctx.currentSurface);
       if (tiles.length > 0) ctx.currentWindow = tiles[0];
-      DBUS.moveMouseToFocus();
+      if (CONFIG.movePointerOnFocus) {
+        DBUS.moveMouseToFocus();
+      }
       return false;
     }
 
@@ -880,19 +886,19 @@ class TilingEngine {
       .filter(
         vertical
           ? (tile) =>
-              overlap(
-                basis.geometry.x,
-                basis.geometry.maxX,
-                tile.geometry.x,
-                tile.geometry.maxX,
-              )
+            overlap(
+              basis.geometry.x,
+              basis.geometry.maxX,
+              tile.geometry.x,
+              tile.geometry.maxX,
+            )
           : (tile) =>
-              overlap(
-                basis.geometry.y,
-                basis.geometry.maxY,
-                tile.geometry.y,
-                tile.geometry.maxY,
-              ),
+            overlap(
+              basis.geometry.y,
+              basis.geometry.maxY,
+              tile.geometry.y,
+              tile.geometry.maxY,
+            ),
       );
     if (candidates.length === 0) return null;
 
@@ -902,7 +908,7 @@ class TilingEngine {
         vertical
           ? (prevMin, tile): number => Math.min(tile.geometry.y * sign, prevMin)
           : (prevMin, tile): number =>
-              Math.min(tile.geometry.x * sign, prevMin),
+            Math.min(tile.geometry.x * sign, prevMin),
         Infinity,
       );
 
