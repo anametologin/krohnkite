@@ -46,6 +46,7 @@ $(KWINPKG_DIR): remove_meta
 $(KWINPKG_DIR): $(KWIN_META)
 $(KWINPKG_DIR): $(KWIN_QML)
 $(KWINPKG_DIR): $(KWINPKG_DIR)/contents/ui/config.ui
+$(KWINPKG_DIR): $(KWINPKG_DIR)/contents/ui/dbus.qml
 $(KWINPKG_DIR): $(KWINPKG_DIR)/contents/ui/popup.qml
 $(KWINPKG_DIR): $(KWINPKG_DIR)/contents/ui/shortcuts.qml
 $(KWINPKG_DIR): $(KWINPKG_DIR)/contents/code/main.js
@@ -66,6 +67,7 @@ remove_meta:
 $(KWIN_QML): res/main.qml
 
 $(KWINPKG_DIR)/contents/ui/config.ui: res/config.ui
+$(KWINPKG_DIR)/contents/ui/dbus.qml: res/dbus.qml
 $(KWINPKG_DIR)/contents/ui/popup.qml: res/popup.qml
 $(KWINPKG_DIR)/contents/ui/shortcuts.qml: res/shortcuts.qml
 $(KWINPKG_DIR)/contents/code/script.js: $(NODE_SCRIPT)
