@@ -3,6 +3,7 @@
 /builds/
 /.idea/
 /.task/
+**/__pycache__/
 
 /TODO.md
 /krohnkite.js
@@ -10,3 +11,5 @@
 /*.qml
 *.kwinscript
 *.bak
+
+config.py*
