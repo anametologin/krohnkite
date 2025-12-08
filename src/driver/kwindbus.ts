@@ -5,15 +5,16 @@
 */
 
 class DBusManager implements IDBus {
-  isConnected: boolean = false;
-  private existsCall: DBusCall;
+  private _isConnected: boolean = false;
+  private _dBusConnectAttempts: number;
+  private _existsCall: DBusCall;
   private _dBusMoveMouseToFocus: DBusCall;
   private _dBusMoveMouseToCenter: DBusCall;
   private _entered: boolean = false;
 
-  constructor(dbusQml: IDBusQml) {
-    this._dBusMoveMouseToFocus = dbusQml.getDBusMoveMouseToFocus();
-    this._dBusMoveMouseToCenter = dbusQml.getDBusMoveMouseToCenter();
+  constructor(dBusQml: IDBusQml) {
+    this._dBusMoveMouseToFocus = dBusQml.getDBusMoveMouseToFocus();
+    this._dBusMoveMouseToCenter = dBusQml.getDBusMoveMouseToCenter();
     this._dBusMoveMouseToCenter.finished.connect(
       this.moveMouseToFocusCallback.bind(this),
     );
@@ -23,27 +24,31 @@ class DBusManager implements IDBus {
     this._dBusMoveMouseToCenter.failed.connect(() => {
       LOG?.send(LogModules.dbus, "callFailed", " 'MoveMouseToCenter' failed");
     });
-    this.existsCall = dbusQml.getDBusExists();
-    this.existsCall.finished.connect(this.existsCallback.bind(this));
-    this.existsCall.failed.connect(() => {
-      warning("dbus failed");
-    });
-    this.existsCall.call();
+    this._dBusConnectAttempts = 40;
+    this._existsCall = dBusQml.getDBusExists();
+    this._existsCall.finished.connect(this._dBusIsOn.bind(this));
+    this._existsCall.failed.connect(this._checkDBusConn.bind(this));
+    this._existsCall.call();
   }
 
-  private existsCallback() {
-    this.isConnected = true;
-    info("DBus connected");
+  private _dBusIsOn() {
+    this._isConnected = true;
+    info("DBus: connected");
+  }
+  private _checkDBusConn() {
+    if (this._dBusConnectAttempts-- > 0)
+      this.setTimeout(this._existsCall.call, 500);
+    else warning("DBus failed");
   }
   public moveMouseToCenter(timeout?: number) {
-    if (!this.isConnected) return;
+    if (!this._isConnected) return;
     if (timeout !== undefined)
       this.setTimeout(this._dBusMoveMouseToCenter.call, timeout);
     else this._dBusMoveMouseToCenter.call();
   }
 
   public moveMouseToFocus(timeout?: number) {
-    if (!this.isConnected) return;
+    if (!this._isConnected) return;
     if (timeout !== undefined)
       this.setTimeout(this._dBusMoveMouseToFocus.call, timeout);
     else this._dBusMoveMouseToFocus.call();
@@ -61,7 +66,7 @@ class DBusManager implements IDBus {
       callback();
     } catch (e: any) {
       warning(
-        `DBUSProtectFunc: Error raised line: ${e.lineNumber}. Error: ${e}`,
+        `DBusProtectFunc: Error raised line: ${e.lineNumber}. Error: ${e}`,
       );
     } finally {
       this._entered = false;
