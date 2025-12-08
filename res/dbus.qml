@@ -16,7 +16,7 @@ Item {
     DBusCall {
         id: dbusExists;
 
-        service: "org.kde.kglobalaccel";
+        service: "org.kde.KWin";
         path: "/KWin";
         dbusInterface: "org.kde.KWin";
         method: "activeOutputName";
