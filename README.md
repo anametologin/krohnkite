@@ -1,5 +1,16 @@
 # Kröhnkite
 
+# Moved to https://codeberg.org/anametologin/Krohnkite
+
+<details>
+<summary>
+reason
+</summary>
+Microsoft have a lot of military contracts and can be blocked by my govs. In general, the standard good-bad/free-unfree crap that starts when politicians try to divide a loaf of sausage.
+</details>
+
+
+
 A dynamic tiling extension for KWin 6 only.
 
 Kröhnkite is mainly inspired by [dwm][] from suckless folks, and aims to
